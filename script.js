@@ -22,23 +22,23 @@
     {
       practiceId: "practice_01",
       title: "練習 1",
-      description: "まずは形式に慣れてください。3つの意味それぞれに対応する語を選びます。",
+      description: "まずは形式に慣れてください。3つの英語の意味それぞれに対応する語を選びます。",
       options: ["game", "island", "mouth", "movie", "song", "yard"],
       definitions: [
-        { prompt: "周りが水に囲まれた陸地", correctOption: "island" },
-        { prompt: "食べたり話したりするときに使う体の部分", correctOption: "mouth" },
-        { prompt: "音楽のひとかたまり", correctOption: "song" }
+        { prompt: "land with water all around it", correctOption: "island" },
+        { prompt: "part of your body used for eating and speaking", correctOption: "mouth" },
+        { prompt: "a piece of music", correctOption: "song" }
       ]
     },
     {
       practiceId: "practice_02",
       title: "練習 2",
-      description: "本番と同じ matching 形式です。各意味に最も合う語を1つずつ選んでください。",
+      description: "本番と同じ形式です。3つの英語の意味それぞれに最も合う語を1つずつ選んでください。",
       options: ["boy", "rent", "report", "size", "station", "thing"],
       definitions: [
-        { prompt: "大きさ", correctOption: "size" },
-        { prompt: "バスや電車が発着する場所", correctOption: "station" },
-        { prompt: "若い男性", correctOption: "boy" }
+        { prompt: "how big something is", correctOption: "size" },
+        { prompt: "place where buses and trains arrive and leave", correctOption: "station" },
+        { prompt: "a young male person", correctOption: "boy" }
       ]
     }
   ];
@@ -1962,9 +1962,7 @@
         ? winner.primaryMetricScore
         : expectedPosteriorVarianceReduction([], winner.testlet, priorPosterior),
       difficultyGap: Math.abs(winner.testlet.selectionDifficulty - CONFIG.priorMean),
-      reasonText: CONFIG.selectionMetricType === "expectedPosteriorVarianceReduction"
-        ? "最初は、不確実性を最も減らしやすいセットから始めます。"
-        : "最初は、情報量が最も高いセットから始めます。"
+      reasonText: "本番では、解答に応じて次に出るセットが変わります。"
     };
 
     INITIAL_SELECTION_CACHE[cacheKey] = selection;
@@ -2081,9 +2079,7 @@
         ranked[0].testlet,
         currentPosterior || buildTestletAwarePosterior(responses, CONFIG.selectionThetaStep)
       );
-    ranked[0].reasonText = CONFIG.selectionMetricType === "expectedPosteriorVarianceReduction"
-      ? "これまでの解答から、不確実性を最も減らしやすい次のセットを選んでいます。"
-      : "これまでの解答から、情報量が高い次のセットを選んでいます。";
+    ranked[0].reasonText = "このセットは、ここまでの解答に合わせて選ばれています。";
     return ranked[0];
   }
 
@@ -2120,10 +2116,10 @@
 
     elements.testProgress.textContent = "本番 " + (completed + 1) + " / 最大 " + CONFIG.maxTestlets + " セット";
     elements.thetaBadge.textContent = "同じ語は1回だけ選べます";
-    elements.seBadge.textContent = "解答は自動保存されています";
+    elements.seBadge.textContent = "途中状態を保存しています";
     elements.testTitle.textContent = "本番 セット " + (completed + 1);
     elements.testDescription.textContent =
-      "3つの意味それぞれに、最も合う語を1つずつ選んでください。";
+      "3つの英語の意味それぞれに、最も合う語を1つずつ選んでください。";
     elements.selectionReason.textContent = selection.reasonText;
 
     buildTable(testlet, elements.testOptionsHeader, elements.testDefinitionsBody, "test");
@@ -2597,7 +2593,7 @@
         value: exportsState.lastJsonFilename || "必要な場合のみ保存してください",
         note: exportsState.lastJsonDownloadedAt
           ? "保存時刻: " + formatTimestampLabel(exportsState.lastJsonDownloadedAt)
-          : "研究用の詳細ログを残したいときに使います。"
+          : "必要な場合に保存してください。"
       },
       {
         title: "この端末の一時保存",
