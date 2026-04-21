@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UVLT_CAT</title>
+    <meta http-equiv="refresh" content="0; url=./App_CAT/" />
+    <script>
+      (function () {
+        var target = new URL("./App_CAT/", window.location.href);
+        target.search = window.location.search || "";
+        target.hash = window.location.hash || "";
+        window.location.replace(target.toString());
+      })();
+    </script>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+        background: #f4f7fb;
+        color: #17324d;
+      }
+
+      main {
+        width: min(720px, calc(100% - 2rem));
+        margin: 4rem auto;
+        padding: 1.5rem;
+        background: #ffffff;
+        border: 1px solid #d7e0ec;
+        border-radius: 18px;
+        box-shadow: 0 14px 30px rgba(14, 42, 74, 0.08);
+      }
+
+      a {
+        color: #2459a6;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>UVLT_CAT</h1>
+      <p>アプリ画面へ移動しています。</p>
+      <p><a href="./App_CAT/">移動しない場合はこちらを開いてください。</a></p>
+    </main>
+  </body>
+</html>
