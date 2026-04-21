@@ -193,6 +193,36 @@
     return out;
   }
 
+  function audioMetaKey(itemId, condition) {
+    const id = String(itemId || "").trim();
+    const cond = String(condition || "").trim().toLowerCase();
+    if (!id || !cond) return "";
+    return id + "|" + cond;
+  }
+
+  function normalizeAudioMetaPath(audioFile) {
+    const raw = String(audioFile || "").trim().replace(/\\/g, "/");
+    if (!raw) return null;
+    if (/^(https?:)?\/\//i.test(raw)) return raw;
+    if (raw.startsWith("/")) return raw;
+    if (raw.startsWith("./ljt/")) return raw;
+    if (raw.startsWith("ljt/")) return "./" + raw;
+    if (raw.startsWith("./audio/")) return "./ljt/" + raw.slice(2);
+    if (raw.startsWith("audio/")) return "./ljt/" + raw;
+    return "./ljt/" + raw.replace(/^\.\//, "");
+  }
+
+  function resolveAudioPath(audioMetaByItemCondition, itemId, condition, fallbackPath, altItemId) {
+    const candidates = [itemId, altItemId];
+    for (let i = 0; i < candidates.length; i++) {
+      const key = audioMetaKey(candidates[i], condition);
+      if (key && audioMetaByItemCondition.has(key)) {
+        return audioMetaByItemCondition.get(key);
+      }
+    }
+    return fallbackPath;
+  }
+
   // ------------------------------------------------------------------
   // Sentence / audio-meta loading
   // ------------------------------------------------------------------
@@ -238,6 +268,15 @@
     const [rows, metaRows, practiceRows] = await Promise.all(
       [sentencePromise, audioMetaPromise, practicePromise]);
 
+    const audioMetaByItemCondition = new Map();
+    metaRows.forEach(function (row) {
+      const key = audioMetaKey(row.item_id, row.condition);
+      const normalizedPath = normalizeAudioMetaPath(row.audio_file);
+      if (key && normalizedPath) {
+        audioMetaByItemCondition.set(key, normalizedPath);
+      }
+    });
+
     // Build main-item bank keyed by item_id
     const main = new Map();
     rows.forEach(function (row) {
@@ -262,14 +301,24 @@
           sentence_text: row.sentence_text,
           foil_type: row.foil_type || "NA",
           foil_subtype: row.foil_subtype || "",
-          audio_file: "./ljt/audio/" + itemId + "_appropriate.wav"
+          audio_file: resolveAudioPath(
+            audioMetaByItemCondition,
+            itemId,
+            "appropriate",
+            "./ljt/audio/" + itemId + "_appropriate.wav"
+          )
         };
       } else if (row.condition === "inappropriate") {
         entry.inappropriate = {
           sentence_text: row.sentence_text,
           foil_type: row.foil_type || "NA",
           foil_subtype: row.foil_subtype || "",
-          audio_file: "./ljt/audio/" + itemId + "_inappropriate.wav"
+          audio_file: resolveAudioPath(
+            audioMetaByItemCondition,
+            itemId,
+            "inappropriate",
+            "./ljt/audio/" + itemId + "_inappropriate.wav"
+          )
         };
       }
     });
@@ -311,8 +360,14 @@
           });
         }
         const entry = byBase.get(baseId);
-        const audioFile = "./ljt/audio/practice/" + baseId +
-          (condition === "appropriate" ? "_appropriate.wav" : "_inappropriate.wav");
+        const audioFile = resolveAudioPath(
+          audioMetaByItemCondition,
+          baseId,
+          condition,
+          "./ljt/audio/practice/" + baseId +
+            (condition === "appropriate" ? "_appropriate.wav" : "_inappropriate.wav"),
+          rawId
+        );
         if (condition === "appropriate") {
           entry.appropriate = {
             sentence_text: row.sentence_text || "",
@@ -364,8 +419,9 @@
     // Audio meta keyed by audio_file basename
     const audioMeta = new Map();
     metaRows.forEach(function (row) {
-      if (!row.audio_file) return;
-      audioMeta.set(row.audio_file, {
+      const normalizedPath = normalizeAudioMetaPath(row.audio_file);
+      if (!normalizedPath) return;
+      audioMeta.set(normalizedPath, {
         duration_ms: Number(row.duration_ms) || null,
         peak_dbfs: Number(row.peak_dbfs) || null,
         integrated_lufs: Number(row.integrated_lufs) || null,

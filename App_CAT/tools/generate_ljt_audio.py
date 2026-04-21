@@ -40,6 +40,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 import sys
 import warnings
 from datetime import datetime, timezone
@@ -214,10 +215,20 @@ def compute_sha256(path: Path) -> str:
 # -----------------------------------------------------------------------------
 # Filename + meta
 # -----------------------------------------------------------------------------
+def canonical_practice_item_id(item_id: str) -> str:
+    match = re.match(
+        r"^(p\d+)_(?:appropriate|app|inappropriate|inapp)$",
+        item_id.strip(),
+        re.IGNORECASE,
+    )
+    return match.group(1) if match else item_id
+
+
 def audio_filename(item_id: str, condition: str) -> Path:
     if item_id.startswith("p"):
         # Practice items go to practice/ subdir
-        return PRACTICE_AUDIO_DIR / f"{item_id}_{condition}.wav"
+        practice_id = canonical_practice_item_id(item_id)
+        return PRACTICE_AUDIO_DIR / f"{practice_id}_{condition}.wav"
     return AUDIO_DIR / f"{item_id}_{condition}.wav"
 
 
@@ -262,6 +273,7 @@ def write_meta(entries: list[dict]) -> None:
 def process_one(row: dict, *, force: bool, dry_run: bool,
                 existing_meta: dict[str, dict]) -> dict | None:
     item_id = row["item_id"]
+    meta_item_id = canonical_practice_item_id(item_id) if item_id.startswith("p") else item_id
     condition = row["condition"]
     text = (row.get("sentence_text") or "").strip()
     if not text:
@@ -291,7 +303,7 @@ def process_one(row: dict, *, force: bool, dry_run: bool,
     meta = post_process(mp3, out_path)
     meta.update({
         "audio_file": rel_path,
-        "item_id": item_id,
+        "item_id": meta_item_id,
         "condition": condition,
         "text": text,
         "tts_voice": TTS_VOICE,
