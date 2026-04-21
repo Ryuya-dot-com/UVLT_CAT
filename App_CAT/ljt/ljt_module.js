@@ -36,6 +36,7 @@
   let SENTENCE_BANK = null;   // { main: Map<item_id, { app, inapp }>, practice: Array }
   let AUDIO_META = null;      // Map<audio_file, { duration_ms, sha256, ... }>
   let state = null;           // per-session runtime state (controller, scorer, UI refs)
+  let RESPONSE_SHORTCUTS_BOUND = false;
   // R1: linked-difficulty lookup supplied by main app (script.js) so that
   //     sampleLJTTargets() can apply the |linked_difficulty - theta_hat| <= 0.5
   //     neighborhood filter from spec §6.1 without duplicating the test bank
@@ -1176,6 +1177,7 @@
       this.currentTrialMeta = Object.assign({}, meta, {
         response_mode: getResponseMode(),
         replay_enabled: isReplayEnabled(),
+        response_input_method: "",
         audio_play_count_total: 0,
         audio_replay_count: 0,
         audio_play_events: [],
@@ -1224,12 +1226,13 @@
       return true;
     }
 
-    onResponseClick(responseValue) {
+    onResponseClick(responseValue, source) {
       if (this.trialSettled) return;
       this.settleTrial({
         kind: "response",
         value: responseValue,
-        at: this.audioCtx.currentTime
+        at: this.audioCtx.currentTime,
+        source: source || "pointer"
       });
     }
 
@@ -1264,6 +1267,7 @@
       // fold outcome into meta
       if (outcome.kind === "response") {
         meta.response_value = outcome.value;
+        meta.response_input_method = outcome.source || "pointer";
         meta.response_at_ctx_s = outcome.at;
         meta.timeout_flag = false;
         meta.invalidation_reason = null;
@@ -1278,6 +1282,7 @@
         meta.rt_from_offset_ms = meta.rt_from_last_offset_ms;
       } else if (outcome.kind === "timeout") {
         meta.response_value = null;
+        meta.response_input_method = "";
         meta.response_at_ctx_s = null;
         meta.timeout_flag = true;
         meta.invalidation_reason = null;
@@ -1289,6 +1294,7 @@
       } else {
         // invalidated
         meta.response_value = null;
+        meta.response_input_method = "";
         meta.response_at_ctx_s = null;
         meta.timeout_flag = false;
         meta.invalidation_reason = outcome.reason || "unknown";
@@ -1548,6 +1554,7 @@
         deadline_at_ctx_s: t.deadline_at_ctx_s,
         response_at_ctx_s: t.response_at_ctx_s,
         response_value: t.response_value,
+        response_input_method: t.response_input_method || "",
         rt_from_offset_ms: t.rt_from_offset_ms,
         rt_from_first_offset_ms: t.rt_from_first_offset_ms,
         rt_from_last_offset_ms: t.rt_from_last_offset_ms,
@@ -1718,6 +1725,56 @@
     newEl.addEventListener("click", handler);
   }
 
+  function isTextEntryElement(target) {
+    if (!target) return false;
+    if (target.isContentEditable) return true;
+    const tag = String(target.tagName || "").toUpperCase();
+    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+  }
+
+  function getKeyResponseValue(event) {
+    const code = String(event && event.code || "");
+    const key = String(event && event.key || "").toLowerCase();
+    if (code === "KeyF" || key === "f") return 1;
+    if (code === "KeyJ" || key === "j") return 0;
+    return null;
+  }
+
+  function submitResponse(responseValue, source) {
+    if (!state || !state.controller) return false;
+    if (state.controller.trialSettled || state.controller.currentTrialMeta === null) {
+      return false;
+    }
+    if (state.controller.isAudioPlaying()) {
+      state.controller.onPrematureClick();
+      return false;
+    }
+    state.controller.onResponseClick(responseValue, source || "pointer");
+    return true;
+  }
+
+  function bindResponseShortcuts() {
+    if (RESPONSE_SHORTCUTS_BOUND) return;
+    document.addEventListener("keydown", function (event) {
+      if (!state || !state.controller || !state.controller.currentTrialMeta) return;
+      if (event.defaultPrevented || event.repeat) return;
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (isTextEntryElement(event.target)) return;
+
+      const responseValue = getKeyResponseValue(event);
+      if (responseValue == null) return;
+
+      const phase = state.controller.currentTrialMeta.phase;
+      const screenId = phase === "main" ? "ljt-main-screen" : "ljt-practice-screen";
+      const screenEl = document.getElementById(screenId);
+      if (screenEl && screenEl.classList.contains("hidden")) return;
+
+      event.preventDefault();
+      submitResponse(responseValue, "keyboard");
+    });
+    RESPONSE_SHORTCUTS_BOUND = true;
+  }
+
   // ------------------------------------------------------------------
   // Phase entry point
   // ------------------------------------------------------------------
@@ -1810,6 +1867,8 @@
       resumeIndex: 0,
       resumeTrialMeta: null
     };
+
+    bindResponseShortcuts();
 
     try { await loadSentences(); } catch (e) {
       console.error("[LJT] loadSentences failed:", e);
@@ -2477,16 +2536,7 @@
       el.parentNode.replaceChild(newEl, el);
       newEl.addEventListener("click", function () {
         const value = id === ids.yesId ? 1 : 0;
-        if (state.controller.trialSettled ||
-            state.controller.currentTrialMeta === null) {
-          return;  // already settled
-        }
-        // if audio still playing, record premature click and ignore
-        if (state.controller.isAudioPlaying()) {
-          state.controller.onPrematureClick();
-          return;
-        }
-        state.controller.onResponseClick(value);
+        submitResponse(value, "pointer");
       });
     });
 
