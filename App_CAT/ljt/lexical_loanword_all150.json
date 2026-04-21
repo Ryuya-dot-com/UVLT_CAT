@@ -1,0 +1,1052 @@
+[
+  {
+    "word": "note",
+    "most_common_JP": "ノート / メモ",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "ノート = notebook; メモ = memo; 音符 for musical note."
+  },
+  {
+    "word": "grass",
+    "most_common_JP": "草",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No common katakana form; グラス means glass/drinkware."
+  },
+  {
+    "word": "laugh",
+    "most_common_JP": "笑う",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "reply",
+    "most_common_JP": "返事 / 返信",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "リプライ exists in SNS context but native terms dominate."
+  },
+  {
+    "word": "bring",
+    "most_common_JP": "持ってくる",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; basic verb learned early."
+  },
+  {
+    "word": "definite",
+    "most_common_JP": "明確な / 確定的な",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No katakana form; abstract adjective."
+  },
+  {
+    "word": "awful",
+    "most_common_JP": "ひどい",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "coach",
+    "most_common_JP": "コーチ",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Universally known as sports coach."
+  },
+  {
+    "word": "section",
+    "most_common_JP": "セクション / 部分",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "Both forms common; katakana widely recognized."
+  },
+  {
+    "word": "site",
+    "most_common_JP": "サイト",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Web context makes サイト universal."
+  },
+  {
+    "word": "sheet",
+    "most_common_JP": "シート",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Used for paper, bed sheet, spreadsheet."
+  },
+  {
+    "word": "cap",
+    "most_common_JP": "キャップ / 帽子",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "キャップ for baseball cap; 帽子 generic hat."
+  },
+  {
+    "word": "contribute",
+    "most_common_JP": "貢献する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No common loanword form."
+  },
+  {
+    "word": "bump",
+    "most_common_JP": "ぶつかる / こぶ",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "バンプ exists in niche contexts but not general."
+  },
+  {
+    "word": "include",
+    "most_common_JP": "含む",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "proud",
+    "most_common_JP": "誇りに思う",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "プライド exists as noun but not for adjective."
+  },
+  {
+    "word": "constant",
+    "most_common_JP": "一定の / 絶えず",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "コンスタント exists but uncommon in everyday speech."
+  },
+  {
+    "word": "apology",
+    "most_common_JP": "謝罪",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; native kanji compound."
+  },
+  {
+    "word": "counsel",
+    "most_common_JP": "助言 / カウンセル",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "カウンセリング more common than カウンセル."
+  },
+  {
+    "word": "poverty",
+    "most_common_JP": "貧困",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form."
+  },
+  {
+    "word": "heritage",
+    "most_common_JP": "遺産",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ヘリテージ exists but uncommon; 遺産 standard."
+  },
+  {
+    "word": "asset",
+    "most_common_JP": "資産",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "アセット used in IT/gaming but 資産 standard."
+  },
+  {
+    "word": "consent",
+    "most_common_JP": "同意 / 承諾",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No common loanword form."
+  },
+  {
+    "word": "specify",
+    "most_common_JP": "指定する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "exhibit",
+    "most_common_JP": "展示する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; 展示 standard."
+  },
+  {
+    "word": "capture",
+    "most_common_JP": "捕獲する / キャプチャ",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "キャプチャ common in screenshot/digital context."
+  },
+  {
+    "word": "debate",
+    "most_common_JP": "ディベート / 討論",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "ディベート widely known from school context."
+  },
+  {
+    "word": "exceed",
+    "most_common_JP": "超える",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "absorb",
+    "most_common_JP": "吸収する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form."
+  },
+  {
+    "word": "approximate",
+    "most_common_JP": "おおよその",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; abstract adjective."
+  },
+  {
+    "word": "frequent",
+    "most_common_JP": "頻繁な",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "former",
+    "most_common_JP": "前の / 元",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form."
+  },
+  {
+    "word": "cave",
+    "most_common_JP": "洞窟",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; ケイブ rarely used."
+  },
+  {
+    "word": "scenario",
+    "most_common_JP": "シナリオ",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Virtually always katakana."
+  },
+  {
+    "word": "soap",
+    "most_common_JP": "石鹸 / ソープ",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "石鹸 standard; ソープ used in compounds."
+  },
+  {
+    "word": "tutor",
+    "most_common_JP": "家庭教師 / チューター",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "家庭教師 more common; チューター in university context."
+  },
+  {
+    "word": "diamond",
+    "most_common_JP": "ダイヤモンド",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Universally known katakana."
+  },
+  {
+    "word": "orchestra",
+    "most_common_JP": "オーケストラ",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Universally known loanword."
+  },
+  {
+    "word": "slot",
+    "most_common_JP": "スロット",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Known from slot machine, time slot."
+  },
+  {
+    "word": "scrap",
+    "most_common_JP": "スクラップ / くず",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "スクラップ common for metal/newspaper clippings."
+  },
+  {
+    "word": "venue",
+    "most_common_JP": "会場 / ベニュー",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ベニュー growing in event industry but uncommon."
+  },
+  {
+    "word": "shrink",
+    "most_common_JP": "縮む",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "シュリンク exists in packaging/tech contexts."
+  },
+  {
+    "word": "fling",
+    "most_common_JP": "投げる",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "weep",
+    "most_common_JP": "泣く / 嘆く",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form."
+  },
+  {
+    "word": "activate",
+    "most_common_JP": "起動する / アクティベート",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "アクティベート used in software context."
+  },
+  {
+    "word": "explode",
+    "most_common_JP": "爆発する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "swift",
+    "most_common_JP": "素早い",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "スウィフト only as proper noun/name."
+  },
+  {
+    "word": "greasy",
+    "most_common_JP": "脂っこい",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "mustache",
+    "most_common_JP": "口ひげ",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No common katakana form."
+  },
+  {
+    "word": "paradise",
+    "most_common_JP": "パラダイス / 楽園",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "パラダイス widely recognized."
+  },
+  {
+    "word": "pastry",
+    "most_common_JP": "ペストリー / 焼き菓子",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "ペストリー known in bakery context."
+  },
+  {
+    "word": "vase",
+    "most_common_JP": "花瓶",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No common loanword."
+  },
+  {
+    "word": "chord",
+    "most_common_JP": "コード / 和音",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "コード common in music; homophone with cord/code."
+  },
+  {
+    "word": "rectangle",
+    "most_common_JP": "長方形",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "hum",
+    "most_common_JP": "ハミングする / 鼻歌",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "ハミング more common than ハム."
+  },
+  {
+    "word": "pork",
+    "most_common_JP": "豚肉 / ポーク",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "ポーク common in restaurant/menu context."
+  },
+  {
+    "word": "perfume",
+    "most_common_JP": "香水 / パフューム",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "香水 standard; パフューム in branding."
+  },
+  {
+    "word": "wizard",
+    "most_common_JP": "ウィザード / 魔法使い",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "ウィザード common in games/software."
+  },
+  {
+    "word": "sanctuary",
+    "most_common_JP": "聖域 / サンクチュアリ",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "サンクチュアリ used in wildlife/religious context."
+  },
+  {
+    "word": "altitude",
+    "most_common_JP": "高度",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "robe",
+    "most_common_JP": "ローブ",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Known from bathrobe/wizard robe."
+  },
+  {
+    "word": "pirate",
+    "most_common_JP": "海賊 / パイレーツ",
+    "loanword_status": "native",
+    "cognate_ease": "medium",
+    "notes": "海賊 standard; パイレーツ in titles."
+  },
+  {
+    "word": "notify",
+    "most_common_JP": "通知する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword verb form."
+  },
+  {
+    "word": "erase",
+    "most_common_JP": "消す",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "消しゴム uses 消す; no loanword verb."
+  },
+  {
+    "word": "swap",
+    "most_common_JP": "交換する / スワップ",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "スワップ in finance/tech contexts."
+  },
+  {
+    "word": "bald",
+    "most_common_JP": "はげた",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "mandatory",
+    "most_common_JP": "必須の / 義務的な",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form; abstract adjective."
+  },
+  {
+    "word": "price",
+    "most_common_JP": "値段 / 価格",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "プライス used in retail/branding but 値段/価格 dominate."
+  },
+  {
+    "word": "photograph",
+    "most_common_JP": "写真",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "フォト exists in compounds; 写真 standard."
+  },
+  {
+    "word": "garden",
+    "most_common_JP": "庭 / ガーデン",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "ガーデン common in compound names (ビアガーデン etc.); 庭 standard native."
+  },
+  {
+    "word": "eye",
+    "most_common_JP": "目",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "アイ used in compounds (アイシャドウ) but 目 standard."
+  },
+  {
+    "word": "father",
+    "most_common_JP": "父 / お父さん",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ファーザー rare; native terms dominate family vocabulary."
+  },
+  {
+    "word": "night",
+    "most_common_JP": "夜",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ナイト used in compounds (ナイトクラブ) but 夜 standard."
+  },
+  {
+    "word": "uncle",
+    "most_common_JP": "おじ / おじさん",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "アンクル rare; kinship terms typically native."
+  },
+  {
+    "word": "center",
+    "most_common_JP": "センター / 中央",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "センター widely used (センター試験, ショッピングセンター); 中央 standard native."
+  },
+  {
+    "word": "brother",
+    "most_common_JP": "兄弟 / 兄 / 弟",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ブラザー rare; family terms native."
+  },
+  {
+    "word": "hour",
+    "most_common_JP": "時間",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "アワー used in compound (ラッシュアワー) but 時間 standard."
+  },
+  {
+    "word": "plan",
+    "most_common_JP": "プラン / 計画",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "プラン common in business/service contexts; 計画 standard native."
+  },
+  {
+    "word": "bath",
+    "most_common_JP": "風呂 / バス",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "バス (bath) homophonous with bus; 風呂 standard."
+  },
+  {
+    "word": "shoulder",
+    "most_common_JP": "肩",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ショルダー used in bag names (ショルダーバッグ) but 肩 standard."
+  },
+  {
+    "word": "prepare",
+    "most_common_JP": "準備する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent; 準備 standard."
+  },
+  {
+    "word": "forget",
+    "most_common_JP": "忘れる",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "work",
+    "most_common_JP": "働く / 仕事",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ワーク used in compounds (ワークショップ) but 働く/仕事 standard."
+  },
+  {
+    "word": "return",
+    "most_common_JP": "戻る / 返す",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "リターン used in specific contexts (return key, return on investment)."
+  },
+  {
+    "word": "check",
+    "most_common_JP": "チェック / 確認する",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "チェック very common as verb/noun; also pattern (チェック柄)."
+  },
+  {
+    "word": "stare",
+    "most_common_JP": "見つめる",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "main",
+    "most_common_JP": "メイン / 主な",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "メイン widely used (メインディッシュ, メインテーマ); 主な native."
+  },
+  {
+    "word": "bad",
+    "most_common_JP": "悪い",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "バッド used rarely in slang (バッドエンド); 悪い standard."
+  },
+  {
+    "word": "cold",
+    "most_common_JP": "寒い / 冷たい",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "コールド used in compounds (コールドドリンク) but native dominates."
+  },
+  {
+    "word": "general",
+    "most_common_JP": "一般的な / 全般の",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ジェネラル rare outside specific compounds; 一般 standard."
+  },
+  {
+    "word": "feature",
+    "most_common_JP": "特徴 / フィーチャー",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "フィーチャー used in tech/media (フィーチャーフォン); 特徴 standard."
+  },
+  {
+    "word": "weed",
+    "most_common_JP": "雑草",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ウィード rare; 雑草 standard."
+  },
+  {
+    "word": "vegetable",
+    "most_common_JP": "野菜 / ベジタブル",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ベジタブル rare outside branding; 野菜 dominant."
+  },
+  {
+    "word": "knowledge",
+    "most_common_JP": "知識",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ナレッジ used in business/IT contexts (ナレッジマネジメント); 知識 standard."
+  },
+  {
+    "word": "average",
+    "most_common_JP": "平均",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "アベレージ used in sports/stats; 平均 standard."
+  },
+  {
+    "word": "circle",
+    "most_common_JP": "サークル / 円",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "サークル means club/group in JP; 円 for geometric shape."
+  },
+  {
+    "word": "knife",
+    "most_common_JP": "ナイフ / 包丁",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "ナイフ for Western-style; 包丁 for kitchen knife (Japanese)."
+  },
+  {
+    "word": "justice",
+    "most_common_JP": "正義",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ジャスティス rare outside titles/names; 正義 standard."
+  },
+  {
+    "word": "envelope",
+    "most_common_JP": "封筒",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "エンベロープ rare outside tech/music contexts; 封筒 standard."
+  },
+  {
+    "word": "apartment",
+    "most_common_JP": "アパート / マンション",
+    "loanword_status": "loanword",
+    "cognate_ease": "medium",
+    "notes": "アパート (lower-grade) vs マンション (higher-grade) distinction differs from English."
+  },
+  {
+    "word": "wrap",
+    "most_common_JP": "包む / ラップ",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "ラップ for plastic wrap/rapping; 包む for verb sense."
+  },
+  {
+    "word": "seek",
+    "most_common_JP": "探す / 求める",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent; formal register."
+  },
+  {
+    "word": "contain",
+    "most_common_JP": "含む",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "コンテナ (container) exists but verb form native."
+  },
+  {
+    "word": "search",
+    "most_common_JP": "検索する / サーチ",
+    "loanword_status": "dual",
+    "cognate_ease": "medium",
+    "notes": "サーチ used in IT (サーチエンジン); 検索 standard."
+  },
+  {
+    "word": "avoid",
+    "most_common_JP": "避ける",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "receive",
+    "most_common_JP": "受け取る",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "レシーブ used in volleyball; verb sense native."
+  },
+  {
+    "word": "super",
+    "most_common_JP": "すごい / スーパー",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "スーパー means supermarket in JP; intensifier sense also known."
+  },
+  {
+    "word": "rotten",
+    "most_common_JP": "腐った",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "smooth",
+    "most_common_JP": "滑らかな / スムーズ",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "スムーズ common (スムーズに進む); 滑らか native."
+  },
+  {
+    "word": "junior",
+    "most_common_JP": "ジュニア / 後輩",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "ジュニア used in sports/products; 後輩 for younger colleague concept."
+  },
+  {
+    "word": "behavior",
+    "most_common_JP": "行動 / 振る舞い",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; 行動 standard."
+  },
+  {
+    "word": "celebration",
+    "most_common_JP": "祝い / お祝い",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "セレブレーション rare; 祝い standard."
+  },
+  {
+    "word": "phrase",
+    "most_common_JP": "フレーズ / 言い回し",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "フレーズ common in music/language learning contexts."
+  },
+  {
+    "word": "wealth",
+    "most_common_JP": "富 / 財産",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; 富 standard."
+  },
+  {
+    "word": "agriculture",
+    "most_common_JP": "農業",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "アグリカルチャー rare; 農業 standard."
+  },
+  {
+    "word": "regime",
+    "most_common_JP": "政権 / 体制",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "レジーム used in academic/political writing but 政権/体制 standard."
+  },
+  {
+    "word": "volunteer",
+    "most_common_JP": "ボランティア",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "ボランティア universally known and preferred over native terms."
+  },
+  {
+    "word": "intelligence",
+    "most_common_JP": "知能 / 情報",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "インテリジェンス used in tech (AI context) but 知能 standard for the tested sense."
+  },
+  {
+    "word": "pit",
+    "most_common_JP": "穴 / 窪み",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ピット used in motorsports (ピットイン); native 穴 standard for deep place."
+  },
+  {
+    "word": "audience",
+    "most_common_JP": "観客 / 聴衆",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "オーディエンス used in media contexts but 観客 standard."
+  },
+  {
+    "word": "proceed",
+    "most_common_JP": "進む / 続行する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No common loanword form."
+  },
+  {
+    "word": "persist",
+    "most_common_JP": "続く / 固執する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "prior",
+    "most_common_JP": "前の / 以前の",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No common loanword form."
+  },
+  {
+    "word": "consistent",
+    "most_common_JP": "一貫した",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "コンシステント rare outside technical writing; 一貫 standard."
+  },
+  {
+    "word": "mutual",
+    "most_common_JP": "相互の / お互いの",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ミューチュアル used in finance (ミューチュアルファンド) but 相互 standard."
+  },
+  {
+    "word": "vitamin",
+    "most_common_JP": "ビタミン",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "Universally known katakana; pronunciation differs (bitamin)."
+  },
+  {
+    "word": "crust",
+    "most_common_JP": "外皮 / クラスト",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "クラスト rare outside pizza/baking context; 外皮 native."
+  },
+  {
+    "word": "verdict",
+    "most_common_JP": "評決 / 判決",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; 評決 standard legal term."
+  },
+  {
+    "word": "embassy",
+    "most_common_JP": "大使館",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword; 大使館 standard."
+  },
+  {
+    "word": "tobacco",
+    "most_common_JP": "タバコ / 煙草",
+    "loanword_status": "dual",
+    "cognate_ease": "high",
+    "notes": "タバコ/煙草 both common; loanword dominant in speech."
+  },
+  {
+    "word": "alley",
+    "most_common_JP": "路地 / アレー",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "アレー rare outside bowling (ボウリングアレー); 路地 standard."
+  },
+  {
+    "word": "forbid",
+    "most_common_JP": "禁じる",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "disclose",
+    "most_common_JP": "明かす / 公開する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ディスクロージャー (disclosure) used in business but verb native."
+  },
+  {
+    "word": "diminish",
+    "most_common_JP": "減少する / 減らす",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "transplant",
+    "most_common_JP": "移植する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "トランスプラント rare; 移植 standard medical term."
+  },
+  {
+    "word": "adjacent",
+    "most_common_JP": "隣接した",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form; formal register."
+  },
+  {
+    "word": "sane",
+    "most_common_JP": "正気の",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "credible",
+    "most_common_JP": "信頼できる",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form; abstract adjective."
+  },
+  {
+    "word": "abnormal",
+    "most_common_JP": "異常な",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "アブノーマル used in psychology contexts but 異常 standard."
+  },
+  {
+    "word": "lime",
+    "most_common_JP": "ライム",
+    "loanword_status": "loanword",
+    "cognate_ease": "high",
+    "notes": "ライム universally known as the green citrus fruit."
+  },
+  {
+    "word": "intrude",
+    "most_common_JP": "侵入する / 邪魔する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form."
+  },
+  {
+    "word": "shred",
+    "most_common_JP": "細断する / 千切りにする",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "シュレッダー (shredder) exists as noun but verb native."
+  },
+  {
+    "word": "expire",
+    "most_common_JP": "期限切れになる",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword verb; エクスパイア rare."
+  },
+  {
+    "word": "meditate",
+    "most_common_JP": "瞑想する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "メディテーション (noun) used but verb native."
+  },
+  {
+    "word": "ignite",
+    "most_common_JP": "火をつける / 点火する",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword verb; イグニッション exists as noun."
+  },
+  {
+    "word": "pierce",
+    "most_common_JP": "突き刺す / ピアス",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "ピアス in JP means earring; verb sense native (突き刺す)."
+  },
+  {
+    "word": "tranquil",
+    "most_common_JP": "静かな / 穏やかな",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "moist",
+    "most_common_JP": "湿った / しっとりした",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "モイスト used in cosmetics (モイスチャー) but adjective native."
+  },
+  {
+    "word": "tame",
+    "most_common_JP": "飼い慣らされた",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword equivalent."
+  },
+  {
+    "word": "prudent",
+    "most_common_JP": "慎重な / 賢明な",
+    "loanword_status": "native",
+    "cognate_ease": "low",
+    "notes": "No loanword form; formal register."
+  }
+]

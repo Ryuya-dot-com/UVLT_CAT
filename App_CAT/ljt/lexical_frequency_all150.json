@@ -1,0 +1,1202 @@
+[
+  {
+    "word": "note",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Very high-frequency core word, taught from junior high."
+  },
+  {
+    "word": "grass",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "high",
+    "notes": "Common concrete noun, early JP textbook vocabulary."
+  },
+  {
+    "word": "laugh",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "high",
+    "notes": "Common verb/noun, introduced early in JP curriculum."
+  },
+  {
+    "word": "reply",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Standard communication verb/noun, common in JP textbooks."
+  },
+  {
+    "word": "bring",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core high-frequency verb, taught junior high."
+  },
+  {
+    "word": "definite",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Adverb 'definitely' more frequent than adjective form."
+  },
+  {
+    "word": "awful",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "spoken",
+    "jp_eikyo": "medium",
+    "notes": "Common in spoken English, moderate JP exposure."
+  },
+  {
+    "word": "coach",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Sports context familiar to JP learners; also means bus in BNC."
+  },
+  {
+    "word": "section",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "high",
+    "notes": "High-frequency academic/general noun."
+  },
+  {
+    "word": "site",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_2K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Common via 'website'; JP learners familiar via IT."
+  },
+  {
+    "word": "sheet",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Common noun, taught early in JP curriculum."
+  },
+  {
+    "word": "cap",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Clothing item, early JP vocabulary; also idiomatic senses."
+  },
+  {
+    "word": "contribute",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Academic verb, senior high JP curriculum."
+  },
+  {
+    "word": "bump",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Onomatopoeic, not prioritized in JP textbooks."
+  },
+  {
+    "word": "include",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "academic",
+    "jp_eikyo": "high",
+    "notes": "Very common verb across registers, taught early."
+  },
+  {
+    "word": "proud",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Common emotion adjective, early JP curriculum."
+  },
+  {
+    "word": "constant",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "More academic/formal register, senior high level."
+  },
+  {
+    "word": "apology",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Verb 'apologize' often taught instead; noun less common in JP."
+  },
+  {
+    "word": "counsel",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Legal/formal sense; confused with 'council' in JP."
+  },
+  {
+    "word": "poverty",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Social-issue vocabulary, common in JP senior high."
+  },
+  {
+    "word": "heritage",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Cultural topic vocabulary, appears in JP textbooks."
+  },
+  {
+    "word": "asset",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Business/finance term, not central to JP curriculum."
+  },
+  {
+    "word": "consent",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Legal/formal; less common in JP school English."
+  },
+  {
+    "word": "specify",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Formal verb; derivative 'specific' better known to JP learners."
+  },
+  {
+    "word": "exhibit",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Museum context familiar; noun/verb both used."
+  },
+  {
+    "word": "capture",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Cognate 'kyapucha' in JP via photography/screenshots."
+  },
+  {
+    "word": "debate",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "high",
+    "notes": "Classroom activity word; common in JP senior high."
+  },
+  {
+    "word": "exceed",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Formal verb, appears in JP senior high texts."
+  },
+  {
+    "word": "absorb",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Science/academic verb, senior high JP."
+  },
+  {
+    "word": "approximate",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Adverb 'approximately' more common than adjective."
+  },
+  {
+    "word": "frequent",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Adjective form; 'frequently' more common in use."
+  },
+  {
+    "word": "former",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Common in news/formal JP textbook readings."
+  },
+  {
+    "word": "cave",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "medium",
+    "notes": "Common in fiction/narratives; JP familiar via stories."
+  },
+  {
+    "word": "scenario",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Loanword 'shinario' widely known in Japanese."
+  },
+  {
+    "word": "soap",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Everyday item, taught in JP junior high."
+  },
+  {
+    "word": "tutor",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Education context; moderate JP familiarity."
+  },
+  {
+    "word": "diamond",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "high",
+    "notes": "Loanword 'daiyamondo' very familiar to JP learners."
+  },
+  {
+    "word": "orchestra",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Loanword 'okesutora' well-known; music vocabulary in JP."
+  },
+  {
+    "word": "slot",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "low",
+    "notes": "Multiple meanings; not a JP textbook priority."
+  },
+  {
+    "word": "scrap",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Uncommon in JP textbooks despite sukurappu loanword."
+  },
+  {
+    "word": "venue",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_4K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "low",
+    "notes": "More common in BNC; uncommon in JP school English."
+  },
+  {
+    "word": "shrink",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency in JP textbooks; irregular verb."
+  },
+  {
+    "word": "fling",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Literary verb; rare in JP curriculum."
+  },
+  {
+    "word": "weep",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Literary/archaic alternative to 'cry'; rare in JP."
+  },
+  {
+    "word": "activate",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "technical",
+    "jp_eikyo": "medium",
+    "notes": "Tech/science vocabulary; loanword 'akutibeeto' known."
+  },
+  {
+    "word": "explode",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Action verb, appears in JP senior high materials."
+  },
+  {
+    "word": "swift",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Literary adjective; less common in JP school English."
+  },
+  {
+    "word": "greasy",
+    "coca_rank_band": "top_20K",
+    "bnc_band": "top_20K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Derivative of 'grease'; rarely taught in JP."
+  },
+  {
+    "word": "mustache",
+    "coca_rank_band": "top_20K",
+    "bnc_band": "beyond_20K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "BNC prefers 'moustache' spelling; uncommon in JP."
+  },
+  {
+    "word": "paradise",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "medium",
+    "notes": "Loanword 'paradaisu' familiar to JP learners."
+  },
+  {
+    "word": "pastry",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "low",
+    "notes": "Culinary term; more common in British contexts."
+  },
+  {
+    "word": "vase",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "medium",
+    "notes": "Concrete noun, sometimes appears in JP textbooks."
+  },
+  {
+    "word": "chord",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "technical",
+    "jp_eikyo": "medium",
+    "notes": "Music loanword 'kodo'; familiar via guitar/piano."
+  },
+  {
+    "word": "rectangle",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "technical",
+    "jp_eikyo": "medium",
+    "notes": "Geometry term; taught but not frequent in JP."
+  },
+  {
+    "word": "hum",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Onomatopoeic verb; rare in JP curriculum."
+  },
+  {
+    "word": "pork",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Food vocabulary, commonly taught in JP junior high."
+  },
+  {
+    "word": "perfume",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "medium",
+    "notes": "Loanword 'pafuumu' known; moderate JP exposure."
+  },
+  {
+    "word": "wizard",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "medium",
+    "notes": "Fiction/fantasy word; known via Harry Potter etc."
+  },
+  {
+    "word": "sanctuary",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Religious/conservation context; rare in JP textbooks."
+  },
+  {
+    "word": "altitude",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "technical",
+    "jp_eikyo": "low",
+    "notes": "Technical aviation/geography term; uncommon in JP."
+  },
+  {
+    "word": "robe",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Clothing noun; loanword 'roobu' known but uncommon."
+  },
+  {
+    "word": "pirate",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "medium",
+    "notes": "Popular via fiction/films; JP learners familiar."
+  },
+  {
+    "word": "notify",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Formal/official register; less common in JP school texts."
+  },
+  {
+    "word": "erase",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Taught alongside 'eraser'; moderate JP familiarity."
+  },
+  {
+    "word": "swap",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_5K",
+    "genre_skew": "spoken",
+    "jp_eikyo": "low",
+    "notes": "More common in BNC/British English; rare in JP."
+  },
+  {
+    "word": "bald",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Physical description adjective; uncommon in JP texts."
+  },
+  {
+    "word": "mandatory",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_10K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "More frequent in COCA (legal/American); rare in JP."
+  },
+  {
+    "word": "price",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "High-frequency basic economic noun, JH level."
+  },
+  {
+    "word": "photograph",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Common noun/verb; 'photo' informal variant."
+  },
+  {
+    "word": "garden",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Concrete noun taught in JP junior high."
+  },
+  {
+    "word": "eye",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Body part, very high frequency, early JP."
+  },
+  {
+    "word": "father",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core family vocabulary, JH level."
+  },
+  {
+    "word": "night",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core time vocabulary, JH level."
+  },
+  {
+    "word": "uncle",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "high",
+    "notes": "Kinship vocabulary taught JP early."
+  },
+  {
+    "word": "center",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Very common across registers; BNC prefers 'centre'."
+  },
+  {
+    "word": "brother",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core family vocabulary, JH level."
+  },
+  {
+    "word": "hour",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core time vocabulary, JH level."
+  },
+  {
+    "word": "plan",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "High-frequency noun/verb, early JP."
+  },
+  {
+    "word": "bath",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Everyday vocabulary, JH; US/UK 'bath/bathroom' distinction."
+  },
+  {
+    "word": "shoulder",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "high",
+    "notes": "Body part vocabulary, early JP."
+  },
+  {
+    "word": "prepare",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "High-frequency verb, early JP curriculum."
+  },
+  {
+    "word": "forget",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core verb, JH level."
+  },
+  {
+    "word": "work",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Very high-frequency verb/noun, JH level."
+  },
+  {
+    "word": "return",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core verb taught JH; many collocations."
+  },
+  {
+    "word": "check",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Very high-frequency verb/noun across registers."
+  },
+  {
+    "word": "stare",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "medium",
+    "notes": "More common in fiction; less common than look."
+  },
+  {
+    "word": "main",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "High-frequency adjective, early JP."
+  },
+  {
+    "word": "bad",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core evaluative adjective, JH level."
+  },
+  {
+    "word": "cold",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core descriptive adjective, JH level."
+  },
+  {
+    "word": "general",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "High-frequency across academic/general texts."
+  },
+  {
+    "word": "feature",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Common in tech/media; senior high JP."
+  },
+  {
+    "word": "weed",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency in JP curriculum."
+  },
+  {
+    "word": "vegetable",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Food vocabulary, early JP curriculum."
+  },
+  {
+    "word": "knowledge",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "high",
+    "notes": "Academic noun, senior high JP."
+  },
+  {
+    "word": "average",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "high",
+    "notes": "Math/statistics vocabulary, common in JP."
+  },
+  {
+    "word": "circle",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Geometric and social senses common."
+  },
+  {
+    "word": "knife",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "high",
+    "notes": "Kitchen/weapon noun, early JP."
+  },
+  {
+    "word": "justice",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Legal/moral register; senior high JP."
+  },
+  {
+    "word": "envelope",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Concrete noun; moderate JP exposure."
+  },
+  {
+    "word": "apartment",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_5K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "high",
+    "notes": "Higher in COCA (US); BNC prefers 'flat'."
+  },
+  {
+    "word": "wrap",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Common via plastic wrap/food wrap context."
+  },
+  {
+    "word": "seek",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Formal alternative to look for; senior high JP."
+  },
+  {
+    "word": "contain",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "high",
+    "notes": "Academic verb, senior high JP."
+  },
+  {
+    "word": "search",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Very common via internet/search engines."
+  },
+  {
+    "word": "avoid",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "high",
+    "notes": "Core academic verb, senior high JP."
+  },
+  {
+    "word": "receive",
+    "coca_rank_band": "top_1K",
+    "bnc_band": "top_1K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Core verb, JH level; receive/give pair."
+  },
+  {
+    "word": "super",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "spoken",
+    "jp_eikyo": "high",
+    "notes": "Intensifier and noun senses; JP 'supermarket' familiar."
+  },
+  {
+    "word": "rotten",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency; food/moral context."
+  },
+  {
+    "word": "smooth",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Common tactile and metaphorical adjective."
+  },
+  {
+    "word": "junior",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "School grade/sports; moderate JP exposure."
+  },
+  {
+    "word": "behavior",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Academic noun; BNC prefers 'behaviour' spelling."
+  },
+  {
+    "word": "celebration",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Derivation of celebrate; less frequent as noun."
+  },
+  {
+    "word": "phrase",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Language/music vocabulary; senior high JP."
+  },
+  {
+    "word": "wealth",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Economic/social-issue vocabulary."
+  },
+  {
+    "word": "agriculture",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Social-science vocabulary; JP senior high topic."
+  },
+  {
+    "word": "regime",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Political/news register; low JP exposure."
+  },
+  {
+    "word": "volunteer",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Social topic vocabulary; ボランティア very common in JP."
+  },
+  {
+    "word": "intelligence",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Academic/AI context; growing via AI discourse."
+  },
+  {
+    "word": "pit",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Multiple senses; low JP curriculum priority."
+  },
+  {
+    "word": "audience",
+    "coca_rank_band": "top_2K",
+    "bnc_band": "top_2K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Communication/media register; senior high JP."
+  },
+  {
+    "word": "proceed",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Formal verb; common in academic/legal."
+  },
+  {
+    "word": "persist",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Academic verb; less common in JP school materials."
+  },
+  {
+    "word": "prior",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Formal register; appears in academic JP texts."
+  },
+  {
+    "word": "consistent",
+    "coca_rank_band": "top_3K",
+    "bnc_band": "top_3K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Academic adjective; senior high JP."
+  },
+  {
+    "word": "mutual",
+    "coca_rank_band": "top_4K",
+    "bnc_band": "top_4K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Business/academic register."
+  },
+  {
+    "word": "vitamin",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "high",
+    "notes": "Health loanword very familiar to JP learners."
+  },
+  {
+    "word": "crust",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency; pizza/bread context."
+  },
+  {
+    "word": "verdict",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Legal register; rare in JP school materials."
+  },
+  {
+    "word": "embassy",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "International relations vocabulary; senior high JP."
+  },
+  {
+    "word": "tobacco",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Health/economy vocabulary; JP senior high."
+  },
+  {
+    "word": "alley",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency urban vocabulary."
+  },
+  {
+    "word": "forbid",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "Formal verb; 'forbidden' more common."
+  },
+  {
+    "word": "disclose",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Legal/business register; low JP exposure."
+  },
+  {
+    "word": "diminish",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Academic/formal; low JP textbook exposure."
+  },
+  {
+    "word": "transplant",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Medical/botanical; low JP school frequency."
+  },
+  {
+    "word": "adjacent",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Formal spatial adjective; low JP exposure."
+  },
+  {
+    "word": "sane",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency adjective; confused with same."
+  },
+  {
+    "word": "credible",
+    "coca_rank_band": "top_5K",
+    "bnc_band": "top_5K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Academic/news register; low JP school exposure."
+  },
+  {
+    "word": "abnormal",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "academic",
+    "jp_eikyo": "medium",
+    "notes": "Medical/psychology register; moderate JP exposure."
+  },
+  {
+    "word": "lime",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "medium",
+    "notes": "ライム loanword familiar though word itself less frequent."
+  },
+  {
+    "word": "intrude",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency formal verb."
+  },
+  {
+    "word": "shred",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency; シュレッダー familiar as noun."
+  },
+  {
+    "word": "expire",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "technical",
+    "jp_eikyo": "low",
+    "notes": "Legal/technical register; low JP exposure."
+  },
+  {
+    "word": "meditate",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "balanced",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency; noun form 'meditation' more common."
+  },
+  {
+    "word": "ignite",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency; technical register."
+  },
+  {
+    "word": "pierce",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency; loanword ピアス common as noun (earring)."
+  },
+  {
+    "word": "tranquil",
+    "coca_rank_band": "top_20K",
+    "bnc_band": "top_20K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Literary register; rare in JP curriculum."
+  },
+  {
+    "word": "moist",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency tactile adjective."
+  },
+  {
+    "word": "tame",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "fiction",
+    "jp_eikyo": "low",
+    "notes": "Low-frequency; often confused with time."
+  },
+  {
+    "word": "prudent",
+    "coca_rank_band": "top_10K",
+    "bnc_band": "top_10K",
+    "genre_skew": "academic",
+    "jp_eikyo": "low",
+    "notes": "Formal/financial register; rare in JP school English."
+  }
+]

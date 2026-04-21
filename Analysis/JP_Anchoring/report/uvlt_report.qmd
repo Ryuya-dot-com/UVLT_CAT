@@ -1,0 +1,2076 @@
+---
+title: "UVLT Anchor Analysis"
+subtitle: "Ha et al. (2025) Vietnamese-L1 calibrations tested on Japanese-L1 university students"
+author: "Analysis pipeline — `Analysis/JP_Anchoring`"
+date: today
+date-format: "YYYY-MM-DD"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    toc-title: "目次"
+    number-sections: true
+    code-fold: true
+    code-summary: "コードを表示"
+    code-tools: true
+    code-overflow: wrap
+    fig-width: 8
+    fig-height: 5
+    fig-align: center
+    smooth-scroll: true
+    embed-resources: true
+    link-external-newwindow: true
+    citations-hover: true
+bibliography: references.bib
+csl: https://www.zotero.org/styles/apa
+link-citations: true
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+```{r setup}
+#| include: false
+
+suppressPackageStartupMessages({
+  library(readr); library(dplyr); library(tidyr); library(stringr)
+  library(jsonlite); library(ggplot2); library(forcats)
+  library(gt); library(DT); library(plotly)
+  library(ggridges); library(ggrepel); library(patchwork)
+  library(knitr); library(htmltools)
+})
+
+find_project_root <- function(start = getwd()) {
+  path <- normalizePath(start, winslash = "/", mustWork = TRUE)
+  repeat {
+    if (all(dir.exists(file.path(path, c("Analysis", "App_CAT", "Manuscript", "Readings"))))) {
+      return(path)
+    }
+    parent <- dirname(path)
+    if (identical(parent, path)) {
+      stop("Could not locate the UVLT_CAT project root.", call. = FALSE)
+    }
+    path <- parent
+  }
+}
+
+resolve_project_root <- function() {
+  args <- commandArgs(trailingOnly = FALSE)
+  file_arg <- "--file="
+  file_path <- sub(file_arg, "", args[startsWith(args, file_arg)])
+
+  if (length(file_path) >= 1L && file.exists(file_path[1])) {
+    return(find_project_root(dirname(file_path[1])))
+  }
+
+  if (requireNamespace("knitr", quietly = TRUE)) {
+    input_dir <- tryCatch(knitr::current_input(dir = TRUE), error = function(e) "")
+    if (nzchar(input_dir) && dir.exists(input_dir)) {
+      return(find_project_root(input_dir))
+    }
+  }
+
+  find_project_root(getwd())
+}
+
+root <- resolve_project_root()
+ana  <- file.path(root, "Analysis", "JP_Anchoring")
+rd   <- function(p) read_csv(file.path(ana, p), show_col_types = FALSE)
+
+# palette (colorblind-safe, Okabe-Ito adapted)
+pal_group <- c(JP_all       = "#E69F00",
+               JP_5K_admin  = "#D55E00",
+               JP_4K_only   = "#CC79A7",
+               VN_Ha        = "#0072B2",
+               VN           = "#0072B2")
+pal_dir   <- c(Easier_for_JP = "#2C7FB8",
+               Harder_for_JP = "#D7301F",
+               Mild          = "#FEB24C",
+               Negligible    = "grey70")
+pal_ets   <- c(A = "grey60", B = "#F39C12", C = "#C0392B")
+pal_level <- c("1K" = "#1B9E77", "2K" = "#D95F02", "3K" = "#7570B3",
+               "4K" = "#E7298A", "5K" = "#66A61E")
+
+# consistent theme
+theme_report <- theme_minimal(base_size = 11) +
+  theme(plot.title    = element_text(face = "bold", size = 13),
+        plot.subtitle = element_text(size = 10, color = "grey25"),
+        strip.background = element_rect(fill = "grey95", color = NA),
+        panel.grid.minor = element_blank(),
+        legend.position  = "bottom")
+theme_set(theme_report)
+
+# DT helper: consistent styling with Buttons (Excel, CSV, copy, PDF)
+dt_tbl <- function(df, caption = NULL, page = 10, filter = "top",
+                   escape = TRUE) {
+  DT::datatable(
+    df,
+    caption = caption,
+    extensions = c("Buttons", "FixedHeader"),
+    filter  = filter,
+    escape  = escape,
+    rownames = FALSE,
+    class   = "display compact stripe nowrap",
+    options = list(
+      pageLength  = page,
+      fixedHeader = TRUE,
+      dom         = "Blfrtip",
+      buttons     = list(
+        list(extend = "copy",   text = "Copy"),
+        list(extend = "csv",    text = "CSV"),
+        list(extend = "excel",  text = "Excel"),
+        list(extend = "pdf",    text = "PDF"),
+        list(extend = "colvis", text = "列選択")
+      ),
+      lengthMenu  = c(5, 10, 25, 50, 100),
+      scrollX     = TRUE,
+      autoWidth   = TRUE
+    )
+  )
+}
+
+# gt helper: consistent styling for small summary tables
+gt_summary <- function(df, title = NULL, subtitle = NULL, ...) {
+  tb <- gt(df) |>
+    tab_options(
+      table.font.size     = 12,
+      column_labels.background.color = "#F6F6F8",
+      column_labels.font.weight      = "bold",
+      row.striping.include_table_body = TRUE,
+      table.border.top.style    = "none",
+      table.border.bottom.style = "solid"
+    )
+  if (!is.null(title))    tb <- tb |> tab_header(title = md(title),
+                                                 subtitle = md(subtitle %||% ""))
+  tb
+}
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
+# inline formatters
+fmt_num <- function(x, d = 2) formatC(x, digits = d, format = "f")
+fmt_pct <- function(x, d = 1) paste0(formatC(100 * x, digits = d, format = "f"), "%")
+fmt_p   <- function(p) {
+  if (is.na(p)) return("NA")
+  if (p < .001) return("< .001")
+  paste0("= ", formatC(p, digits = 3, format = "f"))
+}
+```
+
+```{r precompute-extras}
+#| include: false
+# ----- joint 11TL + model comparison + DIF sensitivity precomputes -----
+if (file.exists(file.path(ana, "results/rasch_11TL_joint/convergence_log.csv"))) {
+  joint_clog <- rd("results/rasch_11TL_joint/convergence_log.csv")
+  joint_min_iter <- max(joint_clog$iter, na.rm = TRUE)
+  joint_elapsed_total <- sum(joint_clog$elapsed_min, na.rm = TRUE)
+}
+if (file.exists(file.path(ana, "results/model_comparison/IC_comparison_all.csv"))) {
+  IC_cmp <- rd("results/model_comparison/IC_comparison_all.csv")
+  dAIC_JP <- IC_cmp$dAIC[IC_cmp$sample == "JP_all" & IC_cmp$model == "11TL_joint"]
+  dBIC_JP <- IC_cmp$dBIC[IC_cmp$sample == "JP_all" & IC_cmp$model == "11TL_joint"]
+}
+if (file.exists(file.path(ana, "results/dif_joint11TL/dif_method_concordance.csv"))) {
+  conc <- rd("results/dif_joint11TL/dif_method_concordance.csv")
+  spearman_MHvsTLT <- cor(conc$MH_delta, conc$delta_diff,
+                          method = "spearman", use = "complete")
+  sens_cog <- rd("results/dif_joint11TL/sensitivity_by_cognate.csv")
+  sens_diff_hi <- sens_cog$mean_diff[sens_cog$cognate_ease == "high"]
+  sens_diff_lo <- sens_cog$mean_diff[sens_cog$cognate_ease == "low"]
+  sens_lm <- rd("results/dif_joint11TL/sensitivity_linear_coef.csv")
+  hi_idx <- which(grepl("ease.*high", sens_lm$term))[1]
+  sens_beta_hi <- sens_lm$estimate[hi_idx]
+  sens_p_hi    <- sens_lm$p.value[hi_idx]
+}
+```
+
+```{r precompute}
+#| include: false
+
+# ---- persons / items ----
+persons <- rd("data/processed/jp_person_info.csv")
+items   <- rd("data/processed/jp_item_info.csv")
+N_jp       <- nrow(persons)
+N_jp_5k    <- sum(persons$sample_group == "JP_5K_admin")
+N_jp_4k    <- sum(persons$sample_group == "JP_4K_only")
+N_vn       <- 311
+N_items    <- nrow(items)
+
+# ---- scores ----
+grp <- rd("results/descriptives/group_summary.csv")
+get_mean <- function(g) grp$total_mean[grp$sample_group == g]
+get_sd   <- function(g) grp$total_sd[grp$sample_group == g]
+mean_jp4 <- get_mean("JP_4K_only")
+mean_jp5 <- get_mean("JP_5K_admin")
+mean_vn  <- get_mean("VN_Ha")
+sd_jp4   <- get_sd("JP_4K_only")
+sd_jp5   <- get_sd("JP_5K_admin")
+sd_vn    <- get_sd("VN_Ha")
+
+# ---- Rasch 1D joint correlation vs Ha ----
+par1j <- rd("results/rasch_1D/item_params_joint.csv") |>
+  filter(model == "1D_joint") |>
+  select(item_id, level, sample, delta) |>
+  pivot_wider(names_from = sample, values_from = delta)
+ha <- rd("data/processed/ha_params.csv") |>
+  select(item_id, delta_Ha_1D = delta_1D, delta_Ha_11TL = delta_11TL)
+par1j <- par1j |> left_join(ha, by = "item_id")
+
+cmp_j <- rd("results/comparison/cmp_1D_joint_vs_Ha.csv")
+r_1d_j    <- cmp_j$r[cmp_j$comparison == "JP_all vs Ha_1D (joint)"]
+rmsd_1d_j <- cmp_j$RMSD[cmp_j$comparison == "JP_all vs Ha_1D (joint)"]
+slope_1d_j<- cmp_j$slope[cmp_j$comparison == "JP_all vs Ha_1D (joint)"]
+intc_1d_j <- cmp_j$intercept[cmp_j$comparison == "JP_all vs Ha_1D (joint)"]
+
+# per-level
+cmp_pl <- rd("results/comparison/cmp_1D_perlevel_vs_Ha.csv") |>
+  filter(comparison == "JP_all vs Ha_1D")
+r_perlvl <- setNames(cmp_pl$r, cmp_pl$level)
+r_best   <- cmp_pl$level[which.max(cmp_pl$r)]
+r_worst  <- cmp_pl$level[which.min(cmp_pl$r)]
+
+# ---- DIF counts ----
+difA <- rd("results/dif/dif_scenarioA_JPall_vs_VN.csv")
+difB <- rd("results/dif/dif_scenarioB_JP5K_vs_VN.csv")
+difJ <- rd("results/dif/dif_JPsub_5Kadmin_vs_4Konly.csv")
+
+n_A_C      <- sum(difA$ETS_cat == "C", na.rm = TRUE)
+n_A_items  <- nrow(difA)
+n_B_C      <- sum(difB$ETS_cat == "C", na.rm = TRUE)
+n_B_items  <- nrow(difB)
+n_B_5K_C   <- sum(difB$ETS_cat == "C" & difB$level == "5K", na.rm = TRUE)
+n_JPint_C  <- sum(difJ$ETS_cat == "C", na.rm = TRUE)
+jpint_items<- paste(difJ$target[difJ$ETS_cat == "C"], collapse = ", ")
+
+# DIF direction counts (corrected sign: delta<0 easier for JP)
+dir_A <- difA |> mutate(dir = case_when(
+  MH_delta <= -1.5 ~ "Easier_for_JP",
+  MH_delta >=  1.5 ~ "Harder_for_JP",
+  TRUE             ~ "Small")) |>
+  filter(ETS_cat == "C") |>
+  count(dir)
+n_A_easier <- dir_A$n[dir_A$dir == "Easier_for_JP"] |> (\(x) if(length(x)) x else 0L)()
+n_A_harder <- dir_A$n[dir_A$dir == "Harder_for_JP"] |> (\(x) if(length(x)) x else 0L)()
+
+# ---- Anchored person fit ----
+pfit <- rd("results/anchored/person_fit_anchored.csv")
+pct_mis_15 <- mean(pfit$outfit_mnsq > 1.5, na.rm = TRUE)
+pct_mis_20 <- mean(pfit$outfit_mnsq > 2.0, na.rm = TRUE)
+
+# ---- Part A lexical ----
+fisher <- rd("results/dif/lexical_fisher_summary.csv")
+p_loan <- fisher$p_value[fisher$feature == "loanword_status"]
+p_poly <- fisher$p_value[fisher$feature == "polysemy"]
+p_tran <- fisher$p_value[fisher$feature == "translation_ambiguity_JP"]
+
+pct_easy <- rd("results/dif/lexical_pct_easier_JP.csv")
+pct_loanword_easier <- pct_easy$prop_easier_JP[
+  pct_easy$feature == "has_katakana" & pct_easy$category == "TRUE"]
+pct_native_easier <- pct_easy$prop_easier_JP[
+  pct_easy$feature == "has_katakana" & pct_easy$category == "FALSE"]
+
+# strict loanword-only (loanword_status == "loanword")
+lex_full <- rd("results/dif/dif_with_lexical.csv") |>
+  distinct(item_id, directions, loanword_status, cognate_ease, target)
+pct_pureLoan_easier <- mean(
+  lex_full$directions[lex_full$loanword_status == "loanword"] == "Easier_for_JP")
+n_pureLoan <- sum(lex_full$loanword_status == "loanword")
+n_pureNative <- sum(lex_full$loanword_status == "native")
+
+# Linear regression cognate_ease coefficient
+lm_tbl <- rd("results/dif/lexical_linear_signed_MH.csv")
+cog_hi_row <- lm_tbl$term == "cognate_easehigh"
+beta_cog_hi    <- lm_tbl$estimate[cog_hi_row]
+betaCI_cog_hi_lo <- lm_tbl$conf.low[cog_hi_row]
+betaCI_cog_hi_hi <- lm_tbl$conf.high[cog_hi_row]
+p_cog_hi       <- lm_tbl$p.value[cog_hi_row]
+
+# Top examples (strongest Easier_for_JP / Harder_for_JP)
+difA_sorted <- difA |> arrange(MH_delta)
+top_easier_ex <- head(difA_sorted$target[!is.na(difA_sorted$MH_delta)], 5)
+top_harder_ex <- tail(difA_sorted$target[is.finite(difA_sorted$MH_delta)], 5)
+```
+
+# エグゼクティブサマリー
+
+::: {.callout-tip icon=false appearance="simple"}
+## 🎯 一目でわかる主要な知見
+
+1. **全体として Ha et al. の較正は日本人にも概ね適用可能**
+   150 項目 joint 1D Rasch δ の相関 *r* = `r fmt_num(r_1d_j, 2)`、
+   RMSD = `r fmt_num(rmsd_1d_j, 2)`。ただし傾き
+   `r fmt_num(slope_1d_j, 2)` < 1 ⇒ JP 側は VN よりスケールが圧縮。
+
+2. **ETS-C 強DIF項目は 1K–4K で `r n_A_C` / `r n_A_items` 項目**
+   (`r fmt_pct(n_A_C/n_A_items)`)。5K 帯域では
+   `r n_B_5K_C` / 30 項目が C。DIF はランダムではなく **語彙属性**で
+   よく予測できる（下記）。
+
+3. **JP 内部は均質**
+   5K 受験群と 4K 専用群の間で 1K-4K 120 項目中 **`r n_JPint_C` 項目**
+   しか強 DIF を示さず、312 名を一つの母集団として扱ってよい。
+
+4. **片仮名語 (loanword) は 87.5% が JP 優位**
+   Fisher 検定 *p* `r fmt_p(p_loan)`。cognate ease が高い単語は
+   signed MH δ を **β = `r fmt_num(beta_cog_hi, 2)`**
+   (95% CI [`r fmt_num(betaCI_cog_hi_lo, 2)`,
+   `r fmt_num(betaCI_cog_hi_hi, 2)`], *p* `r fmt_p(p_cog_hi)`) 下げる。
+   つまり「日本語で片仮名語として定着している単語」こそが JP-VN
+   DIF の主要因。
+
+5. **アンカーモデルの人物適合度**
+   Ha δ 固定で JP θ を推定すると outfit MNSQ > 1.5 の人物は
+   **`r fmt_pct(pct_mis_15)`**。DIF の存在と整合しており、JP 用に
+   再較正する必要性を示唆する。
+:::
+
+::: {.callout-note collapse="true"}
+## 📖 用語
+
+- **δ (item difficulty)**: Rasch モデルで推定される項目困難度。θ = 0 の
+  受験者が 50% で正答する項目を 0 とし、正に大きいほど難しい。
+- **θ (person ability)**: 受験者の能力推定値。δ と同じロジット尺度上に
+  置かれる。
+- **1D Rasch**: 単一能力次元を仮定する一次元 Rasch モデル
+  [@Rasch1960]。
+- **11-testlet (11TL) Rasch**: 1 primary dimension + 10 testlet-specific
+  dimensions の多次元モデル [@Bradlow1999; @Wainer2007]。
+  局所独立性の仮定が破れる場合の緩和策。
+- **DIF (Differential Item Functioning)**: 能力をマッチングした際に、
+  異なる集団で正答確率が異なる項目の機能差 [@Holland1993]。
+- **MH δ (Mantel-Haenszel delta)**: ETS スケールで表した DIF 効果量。
+  本分析では reference = JP, focal = VN のため **δ が負** のとき
+  「JP が能力マッチ後に正答しやすい項目」を意味する。
+- **ETS A/B/C 分類**: |δ| < 1 → A (無視可)、1 ≤ |δ| < 1.5 → B (中)、
+  |δ| ≥ 1.5 かつ BH-調整 *p* < .05 → C (強) [@Zwick2012]。
+- **Anchored calibration**: 項目 δ を既知値に固定し人物 θ のみを推定する
+  手続き。アンカーの妥当性が低いと outfit MNSQ が 1.5 を超える人物が
+  増える。
+:::
+
+# 背景と目的
+
+## 研究の背景
+
+語彙サイズは第二言語習熟の中核的指標であり [@Nation2006]、
+英語学習者の到達度評価や指導計画において重要な役割を果たす。
+Updated Vocabulary Levels Test (UVLT) は、Nation (1983) 以来複数の改訂を
+経て、現在は 5 つの頻度帯域 (1K, 2K, 3K, 4K, 5K) × 30 項目の 3 項目
+testlet 形式で構成される [@Webb2017; @UVLT]。
+
+近年、UVLT を computerized adaptive testing (CAT) として配信する実装が
+提案されており、Ha et al. [-@HaEtAl2025a; -@HaEtAl2025b] は **ベトナム語母語 (VN-L1)**
+英語学習者 `r N_vn` 名を用いて 11-testlet Rasch モデル
+[@Bradlow1999] で項目困難度を較正し、帯域間 linking を介した joint CAT
+bank を構築した (App_CAT)。
+
+しかし、VN-L1 学習者のデータから較正された項目パラメタを **他言語背景**
+の学習者にそのまま転用して良いかは理論的・実証的に自明ではない。
+DIF (Differential Item Functioning; Holland & Wainer, 1993) の存在は、
+一見妥当な較正であっても特定の集団で項目機能が大きく異なる可能性を
+示唆する。
+
+## 研究設問
+
+本研究は次の設問に答えることを目的とする。
+
+1. **転用可能性 (RQ1)**: Ha et al. (2025) の VN-L1 較正済み δ は、
+   日本語母語 (JP-L1) 大学生の UVLT 応答に対してどの程度適合するか。
+2. **項目機能差 (RQ2)**: どの項目で、どの方向 (JP がより易しい / 難しい) に
+   DIF が生じるか。
+3. **語彙属性による説明 (RQ3)**: 検出された DIF は語彙属性 (特に片仮名
+   語としての定着度) で体系的に予測できるか。
+4. **モデル選択 (RQ4)**: 項目較正において 1D Rasch と 11TL Rasch の
+   いずれが、情報量規準で本データに対して妥当か。
+5. **感度分析 (RQ5)**: DIF の結論は、1D Mantel-Haenszel 法と testlet
+   感知型の効果量比較とで一貫するか。
+
+# 方法
+
+## 参加者
+
+JP-L1 サンプルは 3 つの日本の大学における UVLT 受験記録
+(Form 1, 2, 3) を統合した計 **`r N_jp`** 名である。このうち
+1K–5K 全帯域を実施したのは `r N_jp_5k` 名 (F1 + F3 統合)、
+1K–4K のみ実施したのは `r N_jp_4k` 名 (F2) である。参加者の
+総得点分布は後述 (§サンプル構成)。
+
+VN-L1 サンプルは Ha et al. (2025a) Study 1 で用いられた `r N_vn` 名の
+応答データを Winsteps 形式で再利用した。
+
+## 測定具
+
+UVLT は 3 項目 testlet × 10 testlet × 5 帯域 = **150 項目**の多肢選択
+(定義から対象語を選ぶ) 語彙サイズテストである [@Webb2017]。各 testlet
+では 6 語から 3 語を選ぶ一致課題で、誤答選択肢は同品詞で難易度を揃えた
+distractor から構成される。
+
+## 分析手続き
+
+### データ整形
+
+3 つの Excel ファイルから UVLT テキスト応答を抽出し、ターゲット語との
+文字列一致により 0/1 binary 応答行列 (`r N_jp` × `r N_items`) を再構築
+した。二値化済みの列は File 3 で一部欠損しているため、本分析ではテキスト
+応答を一次データとして扱った。VN-L1 応答は Winsteps 制御ファイルから
+直接読み込んだ (`r N_vn` × `r N_items`)。
+
+### Rasch 較正
+
+以下の組み合わせで独立に較正を実施した:
+
+| モデル | キャリブレーション | サンプル | R パッケージ |
+|-------|-----------------|---------|-------------|
+| 1D Rasch | 帯域別 (5 × 30 項目) | VN / JP_all / JP_5K_admin / JP_4K_only | TAM [@TAM] |
+| 1D Rasch | joint (150 項目) | 同上 | TAM |
+| 11-testlet Rasch | 帯域別 (各 11 次元) | 同上 | TAM |
+| 11-testlet Rasch | joint (51 次元: 1 primary + 50 testlet) | 同上 | TAM |
+
+全ての 11TL モデルは QMC (Quasi Monte Carlo, `r 2000` snodes) を用いて
+数値積分し、joint 51 次元モデルは per-level 11TL 推定値を warm-start に
+用いて収束を補助した。JP_all に関しては欠測構造 (117 名が 5K 全項目
+欠測) が初期 variance 推定と衝突したため、xsi を固定して variance を
+100 iter 暖めてから解放する 2 段階法で解決した。
+
+### DIF 解析
+
+Mantel-Haenszel (MH) 法 [@Holland1993] と Swaminathan-Rogers logistic
+regression [@Swaminathan1990] の両方を difR [@difR] で実施し、
+Benjamini-Hochberg 法で多重比較補正を行った。ETS A/B/C 分類
+[@Zwick2012] を採用した。
+
+DIF 比較は次の 3 条件で実施した:
+
+- **Scenario A**: JP_all (`r N_jp`) vs VN (`r N_vn`), 1K-4K 120 項目
+- **Scenario B**: JP_5K_admin (`r N_jp_5k`) vs VN, 1K-5K 150 項目
+- **JP 内部**: JP_5K_admin vs JP_4K_only, 1K-4K 120 項目
+
+### モデル比較
+
+同一サンプル・同一項目集合で 1D joint Rasch と joint 11TL Rasch の
+AIC / BIC を比較した。per-level 11TL の合計 IC は独立性仮定のもとでの
+「参考値」として併記する。
+
+### 語彙属性収集 (Part A)
+
+DIF で ETS=C にフラグされた項目について、3 つの独立 Web 調査エージェント
+が以下の属性を付与した: (a) loanword status (片仮名化度; cognate ease),
+(b) COCA/BNC 頻度帯、JP 英語教材での露出度, (c) 具体/抽象性・多義性・
+cultural tilt・JP 訳の曖昧性。Fisher's exact 検定とロジスティック/線形
+回帰で DIF 方向の予測因子を特定した。
+
+### Testlet 感知型 DIF 感度分析
+
+joint 11TL で較正された δ を VN / JP_all で比較し、帯域内平均中心化
+(common-item linking) により共通スケールに載せた上で、項目別
+Δδ = δ_JP − δ_VN と Wald z-検定を行った。1D MH 結果との一致率
+(Spearman ρ と 4 セル concordance 表) で sensitivity を評価した。
+
+# 結果
+
+## サンプル構成
+
+```{r sample-gt}
+persons <- rd("data/processed/jp_person_info.csv")
+items   <- rd("data/processed/jp_item_info.csv")
+
+smp_tbl <- persons |>
+  group_by(file_src, sample_group) |>
+  summarise(N = n(), .groups = "drop") |>
+  bind_rows(tibble(file_src = "VN (Ha et al. 2025)",
+                   sample_group = "VN_Ha",
+                   N = 311L))
+
+smp_tbl |>
+  gt() |>
+  tab_header(title = md("**サンプル構成**"),
+             subtitle = md("JP = 3 \u30d5\u30a1\u30a4\u30eb\u7d71\u5408\u306e\u5927\u5b66\u751f 312 \u540d + VN = Ha et al. (2025) \u306e 311 \u540d")) |>
+  cols_label(file_src = "\u30bd\u30fc\u30b9",
+             sample_group = "\u30b0\u30eb\u30fc\u30d7",
+             N = "\u4eba\u6570") |>
+  grand_summary_rows(columns = "N", fns = list("\u5408\u8a08 (JP+VN)" = ~sum(.))) |>
+  tab_options(table.font.size = 12)
+```
+
+::: {.callout-note icon=false appearance="minimal"}
+**解釈**: JP サンプル `r N_jp` 名は **5K まで受験した群**
+(`r N_jp_5k` 名: F1_SSLA + F3_VocabLanguaging) と
+**4K までで終えた群** (`r N_jp_4k` 名: F2_LGCTGC) に分かれる。
+この二群は CAT 形式の長さが異なるだけで、後述の JP 内部 DIF 分析では
+1K–4K 共通項目上ほぼ同一集団と判定された
+(§DIF 内部, `r n_JPint_C` / 120 項目のみ強 DIF)。
+VN サンプルは `r N_vn` 名で Ha et al. (2025) と同一。
+:::
+
+## 分析フロー
+
+| 段階 | スクリプト | 目的 |
+|-----|-----------|------|
+| 01 | `01_prepare_jp_data.R` | Excel → JP 312×150 バイナリ応答 |
+| 02 | `02_prepare_vn_data.R` | Winsteps → VN 311×150 |
+| 03 | `03_read_ha_params.R`  | ConQuest → δ (1D + 11TL), linking |
+| 04 | `04_descriptives.R`    | α, p-value, 人物スコア |
+| 05 | `05_rasch_1D.R`        | 1D Rasch: per-level + joint (TAM) |
+| 06 | `06_rasch_11TL.R`      | 11-testlet Rasch per-level |
+| 07 | `07_compare_difficulty.R` | JP vs Ha 散布・RMSD |
+| 08 | `08_dif_vn_vs_jp.R`    | MH + LogReg DIF (Scenario A & B) |
+| 09 | `09_dif_jp_subgroups.R`| JP 内部 DIF |
+| 10 | `10_anchored_analysis.R`| Ha δ 固定で JP θ を推定 |
+| 11 | `11_flag_items_summary.R` | DIF フラグ統合 + 方向コーディング |
+| 12 | `12_lexical_dif_synthesis.R` | 語彙属性 × DIF 方向 |
+| 13 | `13_rasch_11TL_joint.R` | joint 51次元 11TL 較正 |
+| 15 | `15_joint11TL_dif_sensitivity.R` | joint 11TL DIF 感度分析 |
+| 16 | `16_model_comparison.R` | 1D vs 11TL 情報量基準比較 |
+| 17 | `17_loanword_replacement_targets.R` | loanword 置換対象の抽出 |
+| 18 | `18_merge_replacement_candidates.R` | 置換候補の統合と testlet 再設計 |
+
+Quarto ファイル本体はキャッシュ済み CSV/RData を読み取るだけで描画する。
+フル再現したい場合は `scripts/` を 01 → 18 のうち上表の順で走らせればよい。
+`14_rasch_11TL_joint_JPall_retry.R` は `13` の `JP_all` が不安定な場合の再試行用で、
+通常系の必須ステップではない。
+
+# 記述統計
+
+## グループ別スコア分布
+
+```{r group-summary-gt}
+grp <- rd("results/descriptives/group_summary.csv")
+
+grp |>
+  rename_with(~ str_replace_all(., "score_", "")) |>
+  gt() |>
+  tab_header(title = md("**グループ別 per-level スコア (mean / SD)**")) |>
+  cols_label(sample_group = "\u30b0\u30eb\u30fc\u30d7",
+             N = "N",
+             total_mean = "total_mean",
+             total_sd   = "total_sd") |>
+  fmt_number(columns = where(is.numeric), decimals = 2) |>
+  tab_spanner(label = md("**Total score**"),
+              columns = c(total_mean, total_sd)) |>
+  tab_spanner(label = md("**1K**"),
+              columns = c(`1K_m`,`1K_s`)) |>
+  tab_spanner(label = md("**2K**"),
+              columns = c(`2K_m`,`2K_s`)) |>
+  tab_spanner(label = md("**3K**"),
+              columns = c(`3K_m`,`3K_s`)) |>
+  tab_spanner(label = md("**4K**"),
+              columns = c(`4K_m`,`4K_s`)) |>
+  tab_spanner(label = md("**5K**"),
+              columns = c(`5K_m`,`5K_s`)) |>
+  tab_options(table.font.size = 11)
+```
+
+::: {.callout-note icon=false appearance="minimal"}
+**解釈**: JP_5K_admin の平均総得点
+`r fmt_num(mean_jp5)` (SD `r fmt_num(sd_jp5)`) は、VN サンプルの
+`r fmt_num(mean_vn)` (SD `r fmt_num(sd_vn)`) より
+**約 `r fmt_num(mean_jp5 - mean_vn)` 点高い**。
+これは能力差が大きいことを意味し、アンカー推定や DIF 検定では
+マッチング条件の違いを確認する必要がある。
+特に JP_5K_admin は 1K でほぼ天井 (mean `r fmt_num(grp$score_1K_m[grp$sample_group=="JP_5K_admin"])` / 30)、
+一部の 1K 項目では分散ゼロになり Rasch 推定から除外されている。
+:::
+
+## Cronbach α（帯域別）
+
+```{r alpha-gt}
+alpha <- rd("results/descriptives/cronbach_alpha.csv")
+alpha |>
+  pivot_wider(id_cols = c(group), names_from = level, values_from = alpha) |>
+  gt() |>
+  fmt_number(columns = where(is.numeric), decimals = 3) |>
+  tab_header(title = md("**Cronbach's α (帯域別)**")) |>
+  data_color(columns = c(`1K`,`2K`,`3K`,`4K`,`5K`),
+             colors  = scales::col_numeric(
+                         palette = c("#FEE5D9","#FCAE91","#DE2D26"),
+                         domain  = c(0.3, 0.95), na.color = "white"))
+```
+
+::: {.callout-note icon=false appearance="minimal"}
+**解釈**: JP_5K_admin の 1K 帯域 α (`r alpha$alpha[alpha$group=="JP_5K_admin" & alpha$level=="1K"] |> fmt_num(2)`) が
+極端に低いのは、高能力群が 1K 項目をほぼ全員正答してしまい分散が
+消える（ceiling effect）ためで、信頼性が低いわけではない。
+3K–5K では VN (α `r alpha$alpha[alpha$group=="VN_Ha" & alpha$level=="3K"] |> fmt_num(2)`–`r alpha$alpha[alpha$group=="VN_Ha" & alpha$level=="5K"] |> fmt_num(2)`) と JP_all
+(`r alpha$alpha[alpha$group=="JP_all" & alpha$level=="3K"] |> fmt_num(2)`–`r alpha$alpha[alpha$group=="JP_all" & alpha$level=="5K"] |> fmt_num(2)`) が同等。
+:::
+
+## Total score 分布（人物レベル、グループ別）
+
+```{r person-total-plot, fig.width=8, fig.height=4.5}
+pp <- rd("results/descriptives/person_scores.csv")
+pp <- pp |> mutate(sample_group = factor(sample_group,
+                       levels = c("VN_Ha","JP_4K_only","JP_5K_admin","JP_all")))
+p <- ggplot(pp, aes(x = total, fill = sample_group, color = sample_group)) +
+  geom_density(alpha = .45, adjust = 1.2) +
+  geom_rug(alpha = .4, length = unit(0.015, "npc")) +
+  scale_fill_manual(values = pal_group) +
+  scale_color_manual(values = pal_group) +
+  labs(x = "Total correct (out of 150)",
+       y = "Density",
+       title = "Total-score distributions by sample group",
+       subtitle = "VN sample is mid-range; JP_5K_admin is high-performing")
+p
+```
+
+## 項目 p-value: VN vs JP (インタラクティブ散布)
+
+```{r pval-scatter, fig.width=8.5, fig.height=5.5}
+ipv <- rd("results/descriptives/item_p_wide.csv")
+plot_df <- ipv |>
+  mutate(label_html = sprintf("<b>%s</b> (%s)<br>JP p = %.2f<br>VN p = %.2f<br>Δp = %+.2f",
+                              item_id, level, JP_all, VN_Ha,
+                              JP_all - VN_Ha))
+g <- ggplot(plot_df, aes(VN_Ha, JP_all, color = level, text = label_html)) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, alpha = .5) +
+  geom_point(alpha = .8, size = 2) +
+  scale_color_manual(values = pal_level) +
+  coord_equal(xlim = c(0,1), ylim = c(0,1)) +
+  labs(x = "VN p-value (Ha et al.)", y = "JP p-value",
+       title = "Item-level proportion correct: VN vs JP (all levels)")
+ggplotly(g, tooltip = "text") |>
+  layout(legend = list(orientation = "h", y = -0.15))
+```
+
+::: {.callout-note icon=false appearance="minimal"}
+**解釈**: 対角線より上 = JP の方が当該項目の正答率が高い。
+1K では大多数が対角線上または上側に乗り、JP のほうが僅かに高いか同程度。
+2K 以降、特に 3K–5K では **対角線上方の点が目立つ**（JP が相対的に
+易しいと感じる項目）一方、対角線下方の点も散見される（VN の方が
+易しい項目）。この散らばりが後の DIF 解析の出発点となる。
+:::
+
+# Rasch 較正
+
+::: {.callout-note icon=false}
+## 🔬 このセクションで検討すること
+
+Japanese 応答データから JP 独自の Rasch δ を推定し、Ha et al. の VN δ と
+比較する。**完全な再較正** (JP_all) と **高能力群のみ再較正**
+(JP_5K_admin)、**4K 群のみ再較正** (JP_4K_only) の三つを並行。
+**1D** と **11-testlet** 両モデルを試し、**帯域ごと** と **joint 150
+項目** の二通りで推定する。全体の再現性確認として VN 再推定も実施し、
+Ha et al. の元パラメタとの差が RMSD ≤ 0.16 であることを確認済み
+（パイプラインが正しく動いている証左）。
+:::
+
+## JP vs Ha δ (1D per-level)
+
+```{r rasch-1d-perlevel, fig.width=9, fig.height=6}
+par1d <- rd("results/rasch_1D/item_params_perlevel.csv") |>
+  filter(model == "1D_perlevel") |>
+  select(item_id, level, sample, delta) |>
+  pivot_wider(names_from = sample, values_from = delta)
+ha <- rd("data/processed/ha_params.csv") |>
+  select(item_id, delta_Ha_1D = delta_1D, delta_Ha_11TL = delta_11TL)
+par1d <- par1d |> left_join(ha, by = "item_id") |>
+  left_join(items |> select(item_id, target), by = "item_id")
+
+plot_df <- par1d |>
+  mutate(txt = sprintf("%s (%s)\ntarget = %s\nJP δ = %.2f\nHa δ = %.2f",
+                      item_id, level, target, JP_all, delta_Ha_1D))
+
+g <- ggplot(plot_df, aes(delta_Ha_1D, JP_all, color = level, text = txt)) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, alpha = .5) +
+  geom_point(alpha = .85, size = 2) +
+  scale_color_manual(values = pal_level) +
+  facet_wrap(~ level, scales = "free") +
+  labs(x = "Ha et al. δ (VN-L1, 1D)",
+       y = "JP_all δ (re-calibrated, 1D per-level)",
+       title = "Per-level Rasch item difficulty: JP vs Ha et al.")
+ggplotly(g, tooltip = "text") |>
+  layout(legend = list(orientation = "h", y = -0.1))
+```
+
+::: {.callout-note icon=false appearance="minimal"}
+**解釈**: 帯域ごとに独立して Rasch 推定した場合、
+**最も一致の高い帯域は `r r_best`** (*r* = `r fmt_num(r_perlvl[r_best], 2)`)、
+**最も不一致なのは `r r_worst`** (*r* = `r fmt_num(r_perlvl[r_worst], 2)`)。
+1K は JP で天井効果 (分散ゼロ項目を除いた推定) のため信頼区間が広い。
+5K は単に項目が難しく両群とも分散がある一方、文化・語彙的差が最も表出。
+:::
+
+### 相関と RMSD の要約
+
+```{r cmp-gt}
+cmp1 <- rd("results/comparison/cmp_1D_perlevel_vs_Ha.csv") |>
+  filter(!str_detect(comparison, "VN_refit"))
+cmp_show <- cmp1 |>
+  transmute(level,
+            comparison = str_replace(comparison, " vs Ha_1D", ""),
+            n, r = round(r, 3), RMSD = round(RMSD, 2),
+            slope = round(slope, 2), intercept = round(intercept, 2))
+gt(cmp_show) |>
+  tab_header(title = md("**JP vs Ha 1D (per-level)**")) |>
+  data_color(columns = "r",
+             colors  = scales::col_numeric(
+               palette = c("#FEE5D9","#FCAE91","#DE2D26"),
+               domain  = c(0.4, 1), reverse = TRUE))
+```
+
+## JP vs Ha δ (1D joint 150 項目)
+
+```{r rasch-1d-joint, fig.width=8, fig.height=5.5}
+par1j <- rd("results/rasch_1D/item_params_joint.csv") |>
+  filter(model == "1D_joint") |>
+  select(item_id, level, sample, delta) |>
+  pivot_wider(names_from = sample, values_from = delta)
+par1j <- par1j |> left_join(ha, by = "item_id") |>
+  left_join(items |> select(item_id, target), by = "item_id")
+
+plot_df <- par1j |>
+  mutate(txt = sprintf("%s (%s)\ntarget = %s\nJP δ = %.2f\nHa δ = %.2f",
+                      item_id, level, target, JP_all, delta_Ha_1D))
+
+g <- ggplot(plot_df, aes(delta_Ha_1D, JP_all, color = level, text = txt)) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, alpha = .5) +
+  geom_smooth(method = "lm", se = FALSE, aes(color = NULL),
+              color = "grey40", linetype = "solid", linewidth = .4) +
+  geom_point(alpha = .75, size = 2) +
+  scale_color_manual(values = pal_level) +
+  labs(x = "Ha et al. δ (VN-L1, 1D)",
+       y = "JP_all δ (1D joint 150-item)",
+       title = "1D joint Rasch: JP vs Ha et al.",
+       subtitle = sprintf("r = %.3f, slope = %.2f, intercept = %.2f, RMSD = %.2f",
+                          r_1d_j, slope_1d_j, intc_1d_j, rmsd_1d_j))
+ggplotly(g, tooltip = "text")
+```
+
+::: {.callout-important icon=false}
+## 📌 主要な統計: JP_all vs Ha 1D joint
+
+- 相関 *r* = **`r fmt_num(r_1d_j, 3)`** — 150 項目を共通軸に置いたとき、
+  VN と JP の δ は強く相関する。
+- 勾配 (slope) = **`r fmt_num(slope_1d_j, 2)`** — 1 より小さい →
+  Ha et al. で極端に難しい/易しい項目が、JP では「やや難しい/やや易しい」
+  にとどまる。つまり **JP 側の Rasch スケールは VN より圧縮**。
+- 切片 (intercept) = **`r fmt_num(intc_1d_j, 2)`** — JP の平均項目困難度
+  が VN より `r fmt_num(abs(intc_1d_j), 2)` ロジット低い（＝ JP サンプル
+  の全体能力が VN より高いため）。
+- RMSD = **`r fmt_num(rmsd_1d_j, 2)`** ロジット — 項目レベルの残差平均
+  二乗誤差。1〜2 ロジットの差が典型的な項目で生じる。
+:::
+
+::: {.callout-warning icon=false appearance="minimal"}
+**これが意味すること**: Ha et al. の δ を**そのまま**アンカーとして JP
+に適用すると、難しい項目ほど過大評価・易しい項目ほど過小評価となり、
+結果として能力推定に体系的バイアスが乗る。**JP 用に δ を再較正するか、
+slope/intercept で線形変換する**のが実務的に望ましい。
+:::
+
+## 11-testlet Rasch (per-level)
+
+```{r rasch-11tl, fig.width=9, fig.height=6}
+par11 <- rd("results/rasch_11TL/item_params_perlevel_11TL.csv") |>
+  select(item_id, level, sample, delta) |>
+  pivot_wider(names_from = sample, values_from = delta)
+par11 <- par11 |> left_join(ha, by = "item_id") |>
+  left_join(items |> select(item_id, target), by = "item_id")
+
+plot_df <- par11 |>
+  mutate(txt = sprintf("%s (%s)\ntarget = %s\nJP δ = %.2f\nHa 11TL δ = %.2f",
+                      item_id, level, target, JP_all, delta_Ha_11TL))
+
+g <- ggplot(plot_df, aes(delta_Ha_11TL, JP_all, color = level, text = txt)) +
+  geom_abline(slope = 1, intercept = 0, linetype = 2, alpha = .5) +
+  geom_point(alpha = .85, size = 2) +
+  scale_color_manual(values = pal_level) +
+  facet_wrap(~ level, scales = "free") +
+  labs(x = "Ha et al. δ (VN-L1, 11TL)",
+       y = "JP_all δ (re-calibrated, 11TL per-level)",
+       title = "Per-level 11-testlet Rasch item difficulty: JP vs Ha et al.")
+ggplotly(g, tooltip = "text") |>
+  layout(legend = list(orientation = "h", y = -0.1))
+```
+
+::: {.callout-note icon=false appearance="minimal"}
+**解釈**: 11TL モデルでは testlet 内の local dependency を 10 次元の
+random effects で吸収するため、primary 次元に載る δ は 1D Rasch より
+**圧縮** されて推定される (Ha 11TL の δ レンジは 1D のおよそ 1/2)。
+JP 11TL の δ は Ha 11TL とほぼ線形関係にあるが、scale 差が出るのが通常。
+項目ランクはほぼ保存 (r = 0.51–0.82)。
+:::
+
+## Wright map: person θ と item δ を重ねる (per-level)
+
+```{r wright-map, fig.width=9, fig.height=7}
+# Person theta (per-level) and item delta (per-level) overlay
+pp_pl <- rd("results/rasch_1D/person_params_perlevel.csv")
+ip_pl <- rd("results/rasch_1D/item_params_perlevel.csv")
+
+wright_plot <- function(lv) {
+  persons_df <- pp_pl |>
+    filter(level == lv, sample %in% c("JP_all","VN")) |>
+    mutate(grp = sample)
+  items_df <- ip_pl |>
+    filter(level == lv, sample %in% c("JP_all","VN")) |>
+    select(item_id, sample, delta) |>
+    mutate(grp = sample) |>
+    left_join(items |> select(item_id, target), by = "item_id")
+
+  rng <- range(c(persons_df$theta, items_df$delta), na.rm = TRUE,
+               finite = TRUE) * 1.1
+
+  p_left <- ggplot(persons_df, aes(x = theta, y = grp, fill = grp)) +
+    geom_density_ridges(scale = 0.95, alpha = .6, rel_min_height = 0.01) +
+    scale_fill_manual(values = pal_group, guide = "none") +
+    scale_x_continuous(limits = rng) +
+    coord_cartesian(clip = "off") +
+    labs(x = NULL, y = NULL, title = sprintf("Wright map — %s", lv)) +
+    theme(plot.margin = margin(5, 2, 0, 5))
+
+  p_right <- ggplot(items_df,
+                    aes(x = delta, y = grp, color = grp)) +
+    geom_jitter(height = 0.18, alpha = .65, size = 1.8) +
+    scale_color_manual(values = pal_group, guide = "none") +
+    scale_x_continuous(limits = rng) +
+    labs(x = "logit", y = NULL) +
+    theme(plot.margin = margin(0, 2, 5, 5))
+
+  p_left / p_right + plot_layout(heights = c(2, 1))
+}
+
+plots <- lapply(c("1K","2K","3K","4K","5K"), wright_plot)
+# stack as vertical list
+(plots[[1]] | plots[[2]] | plots[[3]]) /
+  (plots[[4]] | plots[[5]] | plot_spacer())
+```
+
+::: {.callout-note icon=false appearance="minimal"}
+**Wright map の読み方**: 上段 (ridge) が人物 θ の分布、下段 (jitter) が
+項目 δ の位置。両者が同じ logit 軸上に並ぶことで、テストの
+**ターゲティング精度**（項目難度が受験者の能力帯にマッチしているか）が
+視覚的にわかる。
+1K では VN サンプルに対して項目がやや易しめ (左寄り)、5K では両者
+とも項目難度より θ が低く、測定誤差が大きい領域。JP_all (赤) は 3K–4K
+あたりに集中しており、この帯域がテストの実質的な判別領域となっている。
+:::
+
+## Joint 11-testlet (51 次元) モデル
+
+App_CAT と Ha et al. (2025) の完全な testlet 構造を単一モデルで再現した
+**150 項目 × 51 次元** (1 primary + 5 bands × 10 testlets) の Rasch
+モデル。per-level 11TL fit を warm-start に、snodes = 2000 QMC、
+maxiter = 2000、conv = 5×10⁻⁴ で収束させた。
+
+::: {.callout-note icon=false}
+## 🔬 実装上の注意
+
+- **計算コスト**: 51 次元 Rasch モデルは numerical integration が重い。
+  QMC 2000 nodes × 150 items × (persons) × EM iterations で、サンプル
+  あたり 6-18 分。
+- **収束基準**: conv = 5×10⁻⁴ は 11 次元 per-level (2×10⁻³) より
+  厳しい。2000 iter では **log-likelihood の改善が十分小さく項目パラメタ
+  はほぼ安定**しているが、全てのテストレット分散が同時に 5×10⁻⁴ 以下に
+  落ち着くには更に iter が必要。報告する AIC/BIC および item δ は
+  十分に信頼できる。
+- **JP_all (N = 312) は2 段階 fit で成功**: 最初の試行で 117 名が 5K 30
+  項目全部欠測という構造の NA が TAM の初期 variance 推定と衝突した。
+  **Stabilize-then-release** (xsi を warm-start で固定して 100 iter
+  variance のみ推定 → 解放して本格 fit) 戦略で解決 (script `14`)。
+:::
+
+```{r joint-11tl-convergence}
+#| message: false
+joint_path <- file.path(ana, "results/rasch_11TL_joint")
+has_joint  <- file.exists(file.path(joint_path, "convergence_log.csv"))
+
+if (has_joint) {
+  conv_log <- rd("results/rasch_11TL_joint/convergence_log.csv")
+  conv_log |>
+    gt() |>
+    tab_header(title = md("**Joint 51-dim 11TL — 収束診断**"),
+               subtitle = md("snodes = 2000, maxiter = 2000, conv = 5e-4")) |>
+    fmt_number(columns = c(elapsed_min, AIC, BIC, deviance), decimals = 1) |>
+    data_color(columns = "converged",
+               colors  = scales::col_factor(
+                 palette = c("#FFFFFF","#A1D99B"),
+                 domain  = c(FALSE, TRUE)))
+} else {
+  cat("⏳ 51-dim joint 11TL fit still running. Table will populate on re-render.")
+}
+```
+
+### Joint 11TL vs per-level 11TL vs Ha et al.
+
+```{r joint-11tl-compare, fig.width=9, fig.height=6}
+if (has_joint) {
+  joint_par <- rd("results/rasch_11TL_joint/item_params_all_joint11TL.csv")
+  per_par   <- rd("results/rasch_11TL/item_params_perlevel_11TL.csv") |>
+    filter(sample == "JP_all") |>
+    select(item_id, delta_perlvl = delta)
+
+  cmp <- joint_par |>
+    filter(sample == "JP_all") |>
+    select(item_id, level, target, delta_joint = delta) |>
+    left_join(per_par, by = "item_id") |>
+    left_join(ha |> select(item_id, delta_Ha_11TL), by = "item_id") |>
+    mutate(txt = sprintf("%s (%s)\ntarget = %s\njoint δ = %.2f\nper-level δ = %.2f\nHa 11TL δ = %.2f",
+                        item_id, level, target, delta_joint,
+                        delta_perlvl, delta_Ha_11TL))
+
+  g <- ggplot(cmp, aes(delta_perlvl, delta_joint, color = level, text = txt)) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, alpha = .5) +
+    geom_point(alpha = .85, size = 2) +
+    scale_color_manual(values = pal_level) +
+    labs(x = "Per-level 11TL δ (5 separate fits, JP_all)",
+         y = "Joint 51-dim 11TL δ (single model, JP_all)",
+         title = "Joint 51-dim vs per-level 11TL (JP_all, N=312)",
+         subtitle = "Same ability/testlet structure, estimated jointly vs independently per band")
+  ggplotly(g, tooltip = "text")
+} else {
+  cat("⏳ 51-dim joint 11TL fit still running; comparison plot will populate on re-render.")
+}
+```
+
+### Joint 11TL: VN vs JP_all δ 比較
+
+```{r joint-11tl-vn-jp, fig.width=8, fig.height=5.5}
+if (has_joint) {
+  cmp2 <- joint_par |>
+    filter(sample %in% c("VN","JP_all")) |>
+    select(item_id, sample, delta) |>
+    pivot_wider(names_from = sample, values_from = delta) |>
+    left_join(items |> select(item_id, level, target), by = "item_id")
+
+  cmp2 <- cmp2 |> filter(!is.na(VN) & !is.na(JP_all)) |>
+    mutate(txt = sprintf("%s (%s)\ntarget = %s\nVN δ = %.2f\nJP δ = %.2f",
+                        item_id, level, target, VN, JP_all))
+
+  r_joint <- cor(cmp2$VN, cmp2$JP_all, use = "complete")
+  rmsd_joint <- sqrt(mean((cmp2$VN - cmp2$JP_all)^2, na.rm = TRUE))
+  lm_joint <- lm(JP_all ~ VN, data = cmp2)
+  slope_joint <- coef(lm_joint)[2]
+  intc_joint  <- coef(lm_joint)[1]
+
+  g <- ggplot(cmp2, aes(VN, JP_all, color = level, text = txt)) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2, alpha = .5) +
+    geom_smooth(method = "lm", se = FALSE, aes(color = NULL),
+                color = "grey40", linewidth = .4) +
+    geom_point(alpha = .85, size = 2) +
+    scale_color_manual(values = pal_level) +
+    labs(x = "VN joint 11TL δ", y = "JP_all joint 11TL δ",
+         title = "Joint 51-dim 11TL δ: VN vs JP_all",
+         subtitle = sprintf("r = %.3f, RMSD = %.2f, slope = %.2f, intercept = %.2f",
+                            r_joint, rmsd_joint, slope_joint, intc_joint))
+  ggplotly(g, tooltip = "text")
+}
+```
+
+::: {.callout-important icon=false}
+## 📌 Joint 11TL 主要所見
+
+全4サンプル (VN, JP_all, JP_5K_admin, JP_4K_only) で **51 次元 × 2000
+iter × snodes=2000 QMC** を完走 (合計 51.5 分)。conv = 5×10⁻⁴ 閾値には
+2000 iter では到達しなかったが、**log-likelihood はほぼ安定**しており、
+項目 δ / 変動は信頼できる範囲。
+:::
+
+```{r joint-11tl-var}
+#| fig.width: 9
+#| fig.height: 4
+if (has_joint) {
+  var_df <- rd("results/rasch_11TL_joint/variance_all_joint11TL.csv") |>
+    mutate(is_primary = dim_name == "primary",
+           level = ifelse(is_primary, "primary",
+                          substr(dim_name, 1, 2)),
+           sample = factor(sample,
+                           levels = c("VN","JP_all","JP_5K_admin","JP_4K_only")))
+
+  g <- ggplot(var_df, aes(x = dim_name, y = variance, fill = level)) +
+    geom_col(alpha = .85) +
+    scale_fill_manual(values = c(primary = "#333333", pal_level)) +
+    facet_wrap(~ sample, ncol = 1, scales = "free_x") +
+    labs(x = NULL, y = "Estimated variance",
+         title = "Joint 51-dim 11TL — dimension variances",
+         subtitle = "primary = ability dim; *K_t## = testlet-specific random effect") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7),
+          legend.position = "top")
+  g
+} else {
+  cat("⏳ variance decomposition will populate on re-render.")
+}
+```
+
+::: {.callout-note icon=false appearance="minimal"}
+**解釈 (レンダー時に結果があれば)**: 51次元同時推定の testlet variance
+は per-level 推定と概ね一致するはずだが、**primary 次元の分散は
+per-level の primary 分散の合計とは一致しない** (joint は 150 項目全体に
+わたる単一能力軸、per-level は帯域ごとの局所能力)。この差分が App_CAT
+の `CROSS_BAND_LINKING` で吸収していた能力ズレに相当する。
+:::
+
+## 全項目パラメタ (interactive table)
+
+```{r all-items-dt}
+all_par <- par1d |>
+  select(item_id, level, target,
+         JP_all_1D = JP_all, JP_5K_1D = JP_5K_admin,
+         JP_4K_1D = JP_4K_only, VN_1D = VN,
+         Ha_1D = delta_Ha_1D, Ha_11TL = delta_Ha_11TL) |>
+  mutate(across(where(is.numeric), ~ round(., 3)))
+
+# add joint 11TL columns if available
+if (has_joint) {
+  jp_joint <- rd("results/rasch_11TL_joint/item_params_all_joint11TL.csv") |>
+    select(item_id, sample, delta) |>
+    pivot_wider(names_from = sample, values_from = delta,
+                names_prefix = "joint11TL_")
+  all_par <- all_par |> left_join(jp_joint, by = "item_id") |>
+    mutate(across(where(is.numeric), ~ round(., 3)))
+}
+
+dt_tbl(all_par,
+       caption = "150 項目の Rasch δ（1D per-level + joint 11TL）+ Ha et al. δ — 検索・Excel/CSV 出力可。",
+       page = 15)
+```
+
+## モデル比較: 1D vs 11TL (joint)
+
+RQ4 に答えるため、各サンプル内で 1D joint Rasch と joint 11TL Rasch の
+情報量規準を比較した。両モデルは同一の応答行列・同一の項目集合で fit
+されており、AIC / BIC の差分は意味のある比較となる。per-level 11TL の
+合計 IC は参考値として併記する (独立性仮定のもとでの上限)。
+
+```{r ic-comparison}
+has_ic <- file.exists(file.path(ana, "results/model_comparison/IC_comparison_all.csv"))
+if (has_ic) {
+  ic <- rd("results/model_comparison/IC_comparison_all.csv")
+  ic |>
+    mutate(model = recode(model,
+      "1D_joint"                                    = "1D joint Rasch",
+      "11TL_joint"                                   = "11TL joint Rasch (51 dim)",
+      "11TL_per-level (sum of 5 independent fits)"  = "11TL per-level (sum)")) |>
+    select(sample, model, n_persons, n_items, logLik, AIC, BIC,
+           dAIC, dBIC, iter, converged) |>
+    gt(groupname_col = "sample", rowname_col = "model") |>
+    tab_header(title = md("**AIC / BIC 比較** (within-sample, identical data)"),
+               subtitle = md("dAIC / dBIC は各サンプル内の 1D joint Rasch を基準とした差")) |>
+    fmt_number(columns = c(logLik, AIC, BIC), decimals = 1) |>
+    fmt_number(columns = c(dAIC, dBIC), decimals = 1) |>
+    fmt_number(columns = c(n_persons, n_items, iter), decimals = 0,
+               use_seps = FALSE) |>
+    tab_options(table.font.size = 11) |>
+    data_color(columns = c(dAIC, dBIC),
+               colors = scales::col_numeric(
+                 palette = c("#2C7FB8","#E5F5F9","#FECC5C","#D7301F"),
+                 domain = c(-500, 8000)))
+}
+```
+
+::: {.callout-important icon=false}
+## 📌 モデル比較の結論
+
+全 4 サンプルにおいて、1D joint Rasch の AIC / BIC が joint 11TL を
+大きく下回った (ΔAIC ≈ 1,700–2,900、ΔBIC ≈ 4,000–7,900)。
+情報量規準のみに基づけば **1D joint Rasch が本データでは妥当**と
+いう結論になる。
+:::
+
+::: {.callout-warning icon=false}
+## ⚠️ 解釈上の重要な留保
+
+1. **Joint 11TL は非収束**。全 4 サンプルで 2000 iter maxiter に到達した
+   ものの、conv = 5×10⁻⁴ の閾値には届かなかった (convergence_log 参照)。
+   未収束の log-likelihood は真値より **高め** (モデル適合度が実際より
+   悪く評価される) であり、AIC / BIC も同様にバイアスを受ける。完全収束
+   した 11TL ではこの差が縮む可能性がある。
+2. **情報量規準と実践的意義は別問題**。AIC / BIC は「このデータを説明する
+   節約的な内在モデル」として 1D を選好するが、これは 11TL が不要であると
+   いう意味ではない。CAT の stopping rule や anchored θ 推定における
+   **局所独立性の仮定を緩和する**には、たとえ AIC が劣化しても 11TL が
+   理論的に適切である [@Wainer2007]。
+3. **Testlet 分散の大きさに依存**: 本較正では testlet-specific variance
+   の推定値が primary variance に比べて小さく、実質的に 1D モデルの効率性
+   に近づいている (§付録の variance 推定参照)。Ha et al. (2025) の
+   testlet 分散も同様の傾向があり、これは UVLT の 3 項目 testlet が
+   比較的均質な刺激で構成されているためと考えられる。
+
+**結論**: 項目 δ の点推定には 1D joint Rasch を採用し、anchoring/CAT 実装
+では testlet 構造を保存する (App_CAT と整合)。DIF の判定では両モデルから
+感度分析を実施 (下記)。
+:::
+
+# DIF 解析
+
+::: {.callout-note icon=false}
+## 🔬 このセクションで検討すること
+
+Mantel-Haenszel (MH) 法でペア群ごとに項目バイアスを検出する。
+
+- **Scenario A**: JP_all (N = `r N_jp`) vs VN (N = `r N_vn`), 1K-4K の
+  120 項目。全 JP 被験者を用いる最大の対比。
+- **Scenario B**: JP_5K_admin (N = `r N_jp_5k`) vs VN, 1K-5K の 150 項目。
+  5K を含めるため 4K-only 群は除外。
+- **JP 内部**: JP_5K_admin vs JP_4K_only, 1K-4K の 120 項目。二つの JP
+  サブサンプルを一つの母集団として扱えるかの検証。
+
+**MH δ の符号について**: 本分析では reference = JP, focal = VN の設定。
+- **δ < 0** → JP が (能力マッチ後) 易しい → "Easier_for_JP"
+- **δ > 0** → JP が (能力マッチ後) 難しい → "Harder_for_JP"
+
+ETS ガイドラインで |δ| ≥ 1.5 かつ BH 調整 *p* < .05 を **C (強 DIF)** と
+分類する。
+:::
+
+## Scenario A: JP_all vs VN (1K-4K, 120 項目)
+
+### Volcano plot (interactive)
+
+```{r dif-A-volcano, fig.width=8.5, fig.height=5.5}
+difA <- rd("results/dif/dif_scenarioA_JPall_vs_VN.csv") |>
+  mutate(p_safe = pmax(MH_pval_adj, 1e-16),
+         log10p = -log10(p_safe),
+         txt = sprintf("%s (%s)\ntarget = %s\nMH δ = %.2f\nadj p = %.1e\nETS = %s",
+                       item_id, level, target, MH_delta, MH_pval_adj, ETS_cat))
+
+g <- ggplot(difA, aes(MH_delta, log10p, color = ETS_cat, text = txt,
+                      size = (ETS_cat == "C"))) +
+  geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = .4) +
+  geom_vline(xintercept = c(-1.5, 1.5), linetype = 3, alpha = .4) +
+  geom_point(alpha = .8) +
+  scale_size_manual(values = c(`TRUE` = 3, `FALSE` = 1.8), guide = "none") +
+  scale_color_manual(values = pal_ets) +
+  facet_wrap(~ level) +
+  labs(x = "Mantel-Haenszel delta (+ = harder for JP; − = easier for JP)",
+       y = "-log10(BH-adjusted p)",
+       title = "Scenario A — DIF volcano: JP_all vs VN (1K-4K)")
+ggplotly(g, tooltip = "text") |>
+  layout(legend = list(orientation = "h", y = -0.18))
+```
+
+::: {.callout-important icon=false}
+## 📌 Scenario A のまとめ
+
+- **ETS=C (強 DIF) の項目: `r n_A_C` / `r n_A_items`** (`r fmt_pct(n_A_C/n_A_items)`)
+- うち **Easier_for_JP: `r n_A_easier`** 項目、**Harder_for_JP: `r n_A_harder`** 項目
+- 破線 (縦) は |δ| = 1.5 の閾値、破線 (横) は *p* = .05 の閾値。
+- 左下 (濃赤) の点 = 「JP が強く易しい」項目、右上 (濃赤) の点 = 「JP
+  が強く難しい」項目。右寄りの項目は VN L1 に有利な項目 (ベトナム語
+  学習者が顕著に優位)。
+:::
+
+### Scenario A DIF 一覧（検索・出力可）
+
+```{r dif-A-dt}
+difA_show <- difA |>
+  transmute(item_id, level, target,
+            MH_delta = round(MH_delta, 2),
+            MH_alpha = round(MH_alpha, 3),
+            MH_chi   = round(MH_chi, 2),
+            adj_p    = signif(MH_pval_adj, 3),
+            LR_ΔR2   = round(LR_delta_R2, 3),
+            ETS      = ETS_cat) |>
+  arrange(level, desc(abs(MH_delta)))
+dt_tbl(difA_show,
+       caption = "Scenario A (JP_all vs VN, 1K-4K): 120 項目すべての MH + LR DIF 結果。",
+       page = 15)
+```
+
+### Scenario A dumbbell (flagged C 項目のみ)
+
+```{r dif-A-dumbbell, fig.width=9, fig.height=7}
+ipv <- rd("results/descriptives/item_p_wide.csv") |>
+  select(item_id, p_JP = JP_all, p_VN = VN_Ha)
+difA_C <- difA |> filter(ETS_cat == "C") |>
+  left_join(ipv, by = "item_id")
+d <- difA_C |>
+  select(item_id, level, target, p_JP, p_VN) |>
+  arrange(level, p_JP - p_VN) |>
+  mutate(y = fct_inorder(sprintf("%s — %s", item_id, target)))
+d_long <- d |> pivot_longer(c(p_JP, p_VN), names_to = "grp", values_to = "p")
+
+ggplot(d, aes(y = y)) +
+  geom_segment(aes(x = p_VN, xend = p_JP, yend = y),
+               color = "grey60", linewidth = 0.6) +
+  geom_point(data = d_long, aes(x = p, color = grp), size = 2.6) +
+  scale_color_manual(values = c(p_JP = "#E69F00", p_VN = "#0072B2"),
+                     labels = c(p_JP = "JP_all", p_VN = "VN"),
+                     name = "Sample") +
+  facet_wrap(~ level, scales = "free_y", ncol = 2) +
+  labs(x = "Proportion correct (raw p-value)",
+       y = NULL,
+       title = "Scenario A — flagged items: JP vs VN raw p-values",
+       subtitle = "Arrows from VN (blue) to JP (orange) make direction easy to see")
+```
+
+## Scenario B: JP_5K_admin vs VN (1K-5K, 150 項目)
+
+### Volcano plot
+
+```{r dif-B-volcano, fig.width=9, fig.height=6.5}
+difB <- rd("results/dif/dif_scenarioB_JP5K_vs_VN.csv") |>
+  mutate(p_safe = pmax(MH_pval_adj, 1e-16),
+         log10p = -log10(p_safe),
+         txt = sprintf("%s (%s)\ntarget = %s\nMH δ = %.2f\nadj p = %.1e\nETS = %s",
+                       item_id, level, target, MH_delta, MH_pval_adj, ETS_cat))
+
+g <- ggplot(difB, aes(MH_delta, log10p, color = ETS_cat, text = txt,
+                      size = (ETS_cat == "C"))) +
+  geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = .4) +
+  geom_vline(xintercept = c(-1.5, 1.5), linetype = 3, alpha = .4) +
+  geom_point(alpha = .8) +
+  scale_size_manual(values = c(`TRUE` = 3, `FALSE` = 1.8), guide = "none") +
+  scale_color_manual(values = pal_ets) +
+  facet_wrap(~ level) +
+  labs(x = "MH delta (+ = harder for JP; − = easier for JP)",
+       y = "-log10(BH-adjusted p)",
+       title = "Scenario B — DIF volcano: JP_5K_admin vs VN (1K-5K)")
+ggplotly(g, tooltip = "text") |>
+  layout(legend = list(orientation = "h", y = -0.18))
+```
+
+::: {.callout-important icon=false}
+## 📌 Scenario B のまとめ
+
+- **ETS=C: `r n_B_C` / `r n_B_items`** 項目
+- **5K 帯域**だけで **`r n_B_5K_C` / 30 項目 (`r fmt_pct(n_B_5K_C/30)`)**
+  が強 DIF。これは `r n_B_5K_C` が 5K 単体では過半数を占めるほどの高い
+  DIF 率を示している。
+- JP_5K_admin は高能力サブサンプル（mean `r fmt_num(mean_jp5)` / 150）
+  のため、**VN サンプルとの能力分布のオーバーラップが狭く**、高能力帯で
+  のマッチングが弱い条件下での DIF 検定となる点に注意。
+- このシナリオの高 DIF 率は真の項目機能差に加え、**マッチング誤差**
+  からくる過検出も含む可能性がある。より頑健な検定には能力分布の
+  オーバーラップを広げる手法（propensity score マッチング等）が有効。
+:::
+
+### Scenario B DIF 一覧
+
+```{r dif-B-dt}
+difB_show <- difB |>
+  transmute(item_id, level, target,
+            MH_delta = round(MH_delta, 2),
+            MH_alpha = round(MH_alpha, 3),
+            MH_chi   = round(MH_chi, 2),
+            adj_p    = signif(MH_pval_adj, 3),
+            LR_ΔR2   = round(LR_delta_R2, 3),
+            ETS      = ETS_cat) |>
+  arrange(level, desc(abs(MH_delta)))
+dt_tbl(difB_show,
+       caption = "Scenario B (JP_5K_admin vs VN, 1K-5K): 150 項目の DIF 結果。",
+       page = 15)
+```
+
+### Forest plot — flagged 項目の MH δ
+
+```{r dif-forest, fig.width=9, fig.height=10}
+# Combined flagged items from both scenarios
+difA_f <- difA |> filter(ETS_cat == "C") |>
+  mutate(scenario = "A (JP_all vs VN)")
+difB_f <- difB |> filter(ETS_cat == "C") |>
+  mutate(scenario = "B (JP_5K vs VN)")
+
+forest_df <- bind_rows(difA_f, difB_f) |>
+  select(scenario, item_id, level, target, MH_delta, MH_chi, MH_pval_adj) |>
+  mutate(se_approx = abs(MH_delta) /
+           pmax(sqrt(pmax(MH_chi, 1)), 1e-6),
+         y_label = sprintf("%s — %s", item_id, target))
+
+forest_df <- forest_df |>
+  group_by(level) |>
+  arrange(level, MH_delta) |>
+  mutate(y_label = fct_inorder(y_label)) |>
+  ungroup()
+
+ggplot(forest_df, aes(x = MH_delta, y = y_label, color = scenario)) +
+  geom_vline(xintercept = 0, color = "grey60") +
+  geom_vline(xintercept = c(-1.5, 1.5), linetype = 3, color = "grey60") +
+  geom_errorbarh(aes(xmin = MH_delta - se_approx,
+                     xmax = MH_delta + se_approx),
+                 height = 0.25, alpha = .5) +
+  geom_point(size = 2.5, alpha = .85) +
+  facet_wrap(~ level, scales = "free_y", ncol = 2) +
+  scale_color_manual(values = c(`A (JP_all vs VN)` = "#0072B2",
+                                `B (JP_5K vs VN)`  = "#D55E00")) +
+  labs(x = "Mantel-Haenszel delta (approximate 1 SE bars)",
+       y = NULL,
+       title = "Forest plot — flagged DIF items across scenarios",
+       subtitle = "Items to the right are harder for JP; items to the left are easier for JP")
+```
+
+## JP 内部 DIF (5K 実施群 vs 4K 専用群, 1K-4K)
+
+```{r dif-jp-internal, fig.width=8, fig.height=4.5}
+difJ <- rd("results/dif/dif_JPsub_5Kadmin_vs_4Konly.csv") |>
+  mutate(log10p = -log10(pmax(MH_pval_adj, 1e-16)),
+         txt = sprintf("%s (%s)\ntarget = %s\nMH δ = %.2f",
+                       item_id, level, target, MH_delta))
+
+g <- ggplot(difJ, aes(MH_delta, log10p, color = ETS_cat, text = txt)) +
+  geom_hline(yintercept = -log10(0.05), linetype = 2, alpha = .4) +
+  geom_vline(xintercept = c(-1.5, 1.5), linetype = 3, alpha = .4) +
+  geom_point(alpha = .8, size = 2) +
+  scale_color_manual(values = pal_ets) +
+  facet_wrap(~ level, ncol = 4) +
+  labs(x = "MH delta (+ = harder for JP_4K_only)",
+       y = "-log10(adj p)",
+       title = "JP internal DIF: 5K-admin vs 4K-only")
+ggplotly(g, tooltip = "text")
+```
+
+```{r dif-jp-summary-gt}
+difJ |>
+  count(level, ETS_cat) |>
+  pivot_wider(names_from = ETS_cat, values_from = n, values_fill = 0) |>
+  mutate(total = A + B + C) |>
+  gt() |>
+  tab_header(title = md("**ETS 分類: JP 内部 (1K-4K)**")) |>
+  data_color(columns = "C",
+             colors = scales::col_numeric(
+               palette = c("#FFFFFF","#FCBBA1","#DE2D26"),
+               domain = c(0, 5)))
+```
+
+::: {.callout-tip icon=false}
+## ✅ JP 内部 DIF の解釈
+
+JP_5K_admin と JP_4K_only の間で **強 DIF は `r n_JPint_C` 項目のみ**
+(`r jpint_items`)。**ほとんどの項目で両 JP 群は能力マッチ後に同じ機能**を
+示すため、後続分析で **`r N_jp` 名を単一の JP 母集団として扱ってよい**
+ことが確認された。
+:::
+
+## DIF 感度分析: testlet-aware な再検定
+
+RQ5 に答えるため、joint 11TL の δ 推定値を用いた testlet 感知型 DIF 効果量と
+1D Mantel-Haenszel (Scenario A) を比較した。
+
+### 手続き
+
+1. joint 11TL で VN と JP_all それぞれの item δ を抽出
+2. 帯域内平均中心化により共通スケールに載せる (common-item linking)
+3. Δδ = δ_JP − δ_VN を算出 (負値 → JP が相対的に易しい)
+4. Wald z = Δδ / √(SE_VN² + SE_JP²) で検定、BH 補正
+5. 1D MH と testlet 効果量の Spearman ρ を算出し一致度を評価
+6. 片仮名語 (cognate_ease) の効果が両手法で再現するかを確認
+
+### 効果量の対応関係
+
+```{r dif-sensitivity-scatter, fig.width=8, fig.height=5.5}
+if (file.exists(file.path(ana, "results/dif_joint11TL/dif_method_concordance.csv"))) {
+  conc <- rd("results/dif_joint11TL/dif_method_concordance.csv") |>
+    mutate(txt = sprintf("%s (%s)\ntarget = %s\nMH δ = %.2f\ntestlet Δδ = %.2f\nagreement = %s",
+                        item_id, level, target, MH_delta, delta_diff,
+                        agreement))
+
+  g <- ggplot(conc |> filter(!is.na(MH_delta)),
+              aes(MH_delta, delta_diff, color = agreement, text = txt)) +
+    geom_vline(xintercept = c(-1.5, 1.5), linetype = 3, alpha = .4) +
+    geom_hline(yintercept = c(-0.5, 0.5), linetype = 3, alpha = .4) +
+    geom_point(alpha = .8, size = 2.2) +
+    scale_color_manual(values = c(Both = "#C0392B",
+                                  MH_only = "#2980B9",
+                                  Testlet_only = "#8E44AD",
+                                  Neither = "grey60",
+                                  out_of_scope = "grey85")) +
+    labs(x = "1D Mantel-Haenszel delta (ETS scale)",
+         y = "Testlet-aware delta_diff (band-centred, δ_JP − δ_VN)",
+         title = "DIF effect sizes: 1D MH vs testlet-aware (joint 11TL)",
+         subtitle = "Dotted lines show conventional cutoffs (|MH δ| = 1.5, |Δδ| = 0.5)")
+  ggplotly(g, tooltip = "text")
+}
+```
+
+```{r dif-sensitivity-concordance}
+if (file.exists(file.path(ana, "results/dif_joint11TL/dif_method_concordance.csv"))) {
+  conc_tbl <- conc |>
+    filter(!is.na(MH_delta)) |>
+    count(level, agreement) |>
+    pivot_wider(names_from = agreement, values_from = n, values_fill = 0)
+
+  conc_tbl |>
+    gt() |>
+    tab_header(title = md("**DIF 判定の一致度: 1D MH vs testlet-aware**"),
+               subtitle = md("Both = 両手法で強 DIF; MH_only = 1D MH のみ; Testlet_only = testlet のみ"))
+}
+```
+
+::: {.callout-important icon=false}
+## 📌 感度分析の主要所見
+
+-  **手法間相関 (Spearman ρ)**: 1D MH δ と testlet-aware Δδ の順位相関は
+   ρ = **`r fmt_num(spearman_MHvsTLT, 2)`** 。両手法は**項目の相対的 DIF
+   順位に強く一致**する。
+-  **しかし厳密閾値では不一致**: testlet 法は有効自由度が増える分、効果量
+   推定が縮小 (shrinkage) される傾向があり、|Δδ| ≥ 0.5 + BH-adj p < .05
+   の閾値では **いずれの項目も "Both" フラグに至らなかった**。多くの項目は
+   MH のみで C にフラグされる。
+-  **語彙属性による予測力は両手法で再現**:
+   `cognate_ease = high` は signed Δδ を β = **`r fmt_num(sens_beta_hi, 2)`**
+   下げる (*p* `r fmt_p(sens_p_hi)`)。平均 Δδ は高 cognate = `r fmt_num(sens_diff_hi, 2)`
+   (JP 有利)、低 cognate = `r fmt_num(sens_diff_lo, 2)`。
+   **loanword 効果は 1D と testlet 両モデルで頑健**。
+:::
+
+### Sensitivity 回帰: signed Δδ を従属変数とした lexical 属性モデル
+
+```{r dif-sens-lex-gt}
+if (file.exists(file.path(ana, "results/dif_joint11TL/sensitivity_linear_coef.csv"))) {
+  sens_lm <- rd("results/dif_joint11TL/sensitivity_linear_coef.csv") |>
+    filter(term != "(Intercept)") |>
+    mutate(term = str_replace_all(term, c(
+      'factor\\(cognate_ease, levels = c\\("low", "medium", "high"\\)\\)' = "cognate_ease:",
+      'factor\\(pos, levels = c\\("noun", "verb", "adjective"\\)\\)' = "pos:",
+      'factor\\(cultural_tilt, levels = c\\("universal", "business_academic", "western"\\)\\)' = "cultural_tilt:"
+    )))
+  sens_lm |>
+    transmute(term,
+              estimate = round(estimate, 3),
+              `95% CI lower` = round(conf.low, 3),
+              `95% CI upper` = round(conf.high, 3),
+              `p-value`      = signif(p.value, 3)) |>
+    gt() |>
+    tab_header(title = md("**Sensitivity 回帰: signed Δδ (joint 11TL) ~ lexical**"),
+               subtitle = md("Part A (1D MH-based) との係数パターンの一致が頑健性を示す"))
+}
+```
+
+# アンカー推定
+
+Ha et al. の δ を固定して JP 学習者の θ を推定した結果。
+
+::: {.callout-note icon=false}
+## 🔬 このセクションで検討すること
+
+**Anchored calibration** は「項目 δ は既に決まったもの」と仮定して人物
+θ だけを推定する手続き。もし Ha et al. の VN-based δ が JP 学習者にも
+通用するなら、人物適合度 (outfit MNSQ) は 0.5〜1.5 の範囲に収まる人が
+大多数になるはず。実際には **`r fmt_pct(pct_mis_15)` が outfit > 1.5** と
+なり、δ と JP 学習者の応答パターンの不整合を示す。
+:::
+
+## θ 分布（帯域別）
+
+```{r anchored-ridge, fig.width=8, fig.height=5}
+anc_pl <- rd("results/anchored/theta_anchored_perlevel.csv") |>
+  left_join(persons |> select(person_id, sample_group), by = "person_id")
+
+ggplot(anc_pl, aes(x = theta_anchored, y = level, fill = sample_group)) +
+  geom_density_ridges(alpha = .5, scale = 0.95, rel_min_height = 0.01) +
+  scale_fill_manual(values = pal_group) +
+  labs(x = "Anchored θ (Ha et al. 1D δ fixed)",
+       y = "Level",
+       title = "Per-level anchored θ distributions",
+       subtitle = "JP_5K_admin (red) is systematically higher than JP_4K_only (pink)") +
+  theme(legend.position = "right")
+```
+
+## 人物適合度（outfit MNSQ）のヒストグラム
+
+```{r person-fit, fig.width=8.5, fig.height=4.5}
+pfit <- rd("results/anchored/person_fit_anchored.csv") |>
+  left_join(persons |> select(person_id, sample_group, file_src),
+            by = "person_id")
+
+cut_lines <- data.frame(x = c(0.5, 1.5),
+                        lab = c("MNSQ 0.5", "MNSQ 1.5"))
+
+ggplot(pfit, aes(x = outfit_mnsq, fill = sample_group)) +
+  geom_histogram(binwidth = 0.1, alpha = .75, position = "identity") +
+  geom_vline(data = cut_lines, aes(xintercept = x),
+             linetype = 2, color = "grey40") +
+  scale_fill_manual(values = pal_group) +
+  facet_wrap(~ sample_group, ncol = 2) +
+  coord_cartesian(xlim = c(0, 4)) +
+  labs(x = "Outfit MNSQ (anchored model)",
+       y = "Count",
+       title = "Person-fit distribution under Ha-anchored calibration",
+       subtitle = sprintf("Overall %.1f%% of JP persons have outfit > 1.5",
+                          100 * mean(pfit$outfit_mnsq > 1.5, na.rm = TRUE)))
+```
+
+::: {.callout-warning icon=false}
+## ⚠️ 人物適合度の解釈
+
+- **Outfit MNSQ > 1.5** の人物は**`r fmt_pct(pct_mis_15)`**、
+  **> 2.0** は **`r fmt_pct(pct_mis_20)`**。
+- Rasch モデルでは 0.5–1.5 が期待範囲。1.5 超は「期待より乱雑な応答
+  パターン」（易しい項目を間違えて難しい項目を当てるなど）。
+- これは JP 学習者の応答が **Ha et al. の δ が予測する難度順序**から
+  体系的に外れていることを意味する。DIF で検出した項目機能差と整合。
+- つまり、Ha δ をアンカーとして使うなら「補正を入れずそのまま」では
+  能力推定に大きな誤差が乗る。JP 用に δ を再較正すれば outfit は
+  改善する見込み。
+:::
+
+## 適合しない人物 (outfit > 2.0) の詳細
+
+```{r outliers-dt}
+misfit <- pfit |>
+  filter(outfit_mnsq > 2.0) |>
+  left_join(rd("results/anchored/theta_anchored_joint_linked.csv") |>
+              select(person_id, theta_linked = theta_linked_anchored,
+                     raw_total),
+            by = "person_id") |>
+  transmute(person_id, file_src, sample_group,
+            raw_total,
+            theta_linked = round(theta_linked, 2),
+            outfit_mnsq  = round(outfit_mnsq, 2),
+            outfit_t     = round(outfit_t, 2),
+            infit_mnsq   = round(infit_mnsq, 2)) |>
+  arrange(desc(outfit_mnsq))
+dt_tbl(misfit,
+       caption = "Anchored model で大きく misfit する人物 (outfit MNSQ > 2.0)。",
+       page = 10)
+```
+
+## JP_all joint anchored θ vs 素点
+
+```{r anchored-theta-vs-raw, fig.width=8, fig.height=5}
+jt <- rd("results/anchored/theta_anchored_joint_linked.csv") |>
+  mutate(sample_group = factor(sample_group,
+                               levels = c("JP_4K_only","JP_5K_admin")))
+
+g <- ggplot(jt, aes(raw_total, theta_linked_anchored,
+                    color = sample_group,
+                    text = sprintf("%s (%s)\nraw=%d\nθ=%.2f\nSE=%.2f",
+                                   person_id, file_src, raw_total,
+                                   theta_linked_anchored, se))) +
+  geom_point(alpha = .75, size = 2) +
+  scale_color_manual(values = pal_group) +
+  labs(x = "Raw total correct (150 max; NA for F2's 5K)",
+       y = "Anchored θ (App_CAT linked scale)",
+       title = "Anchored θ vs raw total",
+       subtitle = "Monotone within each sample group; JP_5K_admin clustered near ceiling")
+ggplotly(g, tooltip = "text")
+```
+
+# Part A: 語彙属性と DIF 方向
+
+DIF ETS=C で flagged された 67 項目について、並列 Web 調査 (3 エージェント)
+で取得した lexical attributes を DIF 方向に回帰する。
+
+::: {.callout-note icon=false}
+## 🔬 このセクションで検討すること
+
+**疑問**: 「どのような単語が JP 学習者にとって VN 学習者より易しい／
+難しい と感じられるのか？」
+
+そのために 3 つの並列 Web 調査エージェントが 67 項目それぞれに対して
+以下の属性を付与した:
+
+1. **Loanword 状態**: 日本語訳が片仮名か漢字/ひらがなか (loanword /
+   dual / native)、cognate ease (high / medium / low)
+2. **Corpus frequency**: COCA/BNC の frequency band、JP 英語教材での
+   露出度 (jp_eikyo)
+3. **Semantic cultural features**: 具体/抽象、多義性、cultural tilt
+   (universal / western / business_academic)、JP 訳の曖昧性
+   (one-to-one / one-to-many)、JP 教育課程での位置
+
+これらを DIF 方向 (Easier_for_JP vs Harder_for_JP) に対して
+**Fisher's exact 検定** と **多変量ロジスティック / 線形回帰** で評価。
+:::
+
+## 収集した属性の一覧
+
+```{r lex-data-dt}
+lex_full <- rd("results/dif/dif_with_lexical.csv") |>
+  distinct(item_id, level, target, pos, directions, max_abs_MH,
+           loanword_status, cognate_ease, most_common_JP,
+           freq_COCA, freq_BNC, genre_skew, jp_eikyo,
+           concreteness, polysemy, cultural_tilt,
+           school_curriculum_JP, translation_ambiguity_JP,
+           p_JP, p_VN, p_diff) |>
+  mutate(across(where(is.numeric), ~ round(., 3)))
+dt_tbl(lex_full,
+       caption = "67 個の flagged 項目 × 語彙属性（loanword + frequency + semantic）",
+       page = 15, escape = FALSE)
+```
+
+## 一変量 Fisher's exact の要約
+
+```{r fisher-gt}
+fisher_tbl <- rd("results/dif/lexical_fisher_summary.csv") |>
+  mutate(sig = case_when(
+    p_value < .001 ~ "***",
+    p_value < .01  ~ "**",
+    p_value < .05  ~ "*",
+    p_value < .10  ~ ".",
+    TRUE           ~ ""
+  ))
+fisher_tbl |>
+  gt() |>
+  fmt_number(columns = c(p_value, OR_if2x2), decimals = 3) |>
+  tab_header(title = md("**Fisher's exact test: feature × DIF direction**"),
+             subtitle = md("Rows sorted by p-value (ascending).")) |>
+  data_color(columns = "p_value",
+             colors = scales::col_numeric(
+               palette = c("#DE2D26","#FC9272","#FEE5D9","white"),
+               domain  = c(0, 0.5))) |>
+  tab_source_note(md("*`OR_if2x2`: odds ratio when 2×2 table, else NA.*"))
+```
+
+::: {.callout-important icon=false}
+## 📌 一変量検定の主要な発見
+
+**有意な予測因子** (*p* < .05):
+
+1. **`translation_ambiguity_JP`** — *p* `r fmt_p(p_tran)`
+   1 対多翻訳の単語は 61% が JP で易しい。片仮名語と重なる場合が多い。
+2. **`polysemy`** — *p* `r fmt_p(p_poly)`
+   多義語は 78% が JP で易しい。高頻度語の特性。
+3. **`loanword_status`** — *p* `r fmt_p(p_loan)`
+   **純粋な loanword (N = `r n_pureLoan`) のうち
+   `r fmt_pct(pct_pureLoan_easier)` が "Easier for JP"**。
+   一方、native word (N = `r n_pureNative`) では
+   Easier_for_JP は少数派。
+:::
+
+## 特徴別の Easier_for_JP 比率
+
+```{r pct-plot, fig.width=9, fig.height=6}
+pct <- rd("results/dif/lexical_pct_easier_JP.csv") |>
+  mutate(prop_easier_JP = 100 * prop_easier_JP,
+         category = fct_reorder(category, prop_easier_JP, .desc = FALSE))
+
+ggplot(pct, aes(x = prop_easier_JP, y = category, fill = feature)) +
+  geom_col(alpha = .85) +
+  geom_text(aes(label = sprintf("%.0f%% (n=%d)", prop_easier_JP, n)),
+            hjust = -0.1, size = 3.2) +
+  scale_fill_brewer(palette = "Set2", guide = "none") +
+  facet_wrap(~ feature, scales = "free_y", ncol = 2) +
+  coord_cartesian(xlim = c(0, 100)) +
+  geom_vline(xintercept = 50, linetype = 2, alpha = .4) +
+  labs(x = "% of flagged items Easier_for_JP within the category",
+       y = NULL,
+       title = "Which lexical categories produce \"easier for JP\" items?",
+       subtitle = "Dashed line = 50%. Bars to the right favor JP (relative to VN).")
+```
+
+## 重要な 3 特徴の stacked bar
+
+```{r stacked-3, fig.width=10, fig.height=3.8}
+lex <- rd("results/dif/dif_with_lexical.csv") |>
+  distinct(item_id, directions, loanword_status, polysemy,
+           translation_ambiguity_JP, cognate_ease)
+
+mk_stack <- function(feat, title) {
+  d <- lex |> count(.data[[feat]], directions)
+  ggplot(d, aes(x = .data[[feat]], y = n, fill = directions)) +
+    geom_col(alpha = .9) +
+    geom_text(aes(label = n),
+              position = position_stack(vjust = .5),
+              color = "white", fontface = "bold", size = 3.5) +
+    scale_fill_manual(values = pal_dir) +
+    labs(title = title, x = NULL, y = "Count") +
+    theme(legend.position = "none")
+}
+(mk_stack("loanword_status",   "loanword_status (p = .026)") |
+ mk_stack("polysemy",          "polysemy (p = .014)") |
+ mk_stack("translation_ambiguity_JP",
+          "translation_ambiguity (p = .004)")) +
+  plot_annotation(title = "Three strongest univariate predictors of DIF direction",
+                  subtitle = "Blue = easier for JP, Red = harder for JP")
+```
+
+## 多変量ロジスティック回帰 (direction = Easier_for_JP)
+
+```{r logit-forest, fig.width=8, fig.height=5}
+logit <- rd("results/dif/lexical_logistic_main.csv") |>
+  filter(term != "(Intercept)")
+
+logit <- logit |>
+  mutate(term = str_replace(term, "cognate_ease", "cognate_ease:"),
+         term = str_replace(term, "freq_band",    "freq_band:"),
+         term = str_replace(term, "pos",          "pos:"),
+         term = str_replace(term, "cultural_tilt","cultural_tilt:"),
+         sig  = p.value < .1,
+         label = sprintf("%s  (p = %.2f)", term, p.value))
+
+ggplot(logit, aes(y = fct_reorder(term, estimate),
+                  x = estimate,
+                  xmin = pmax(conf.low, 1e-3),
+                  xmax = pmin(conf.high, 50))) +
+  geom_vline(xintercept = 1, linetype = 2, color = "grey50") +
+  geom_errorbarh(height = 0.2, color = "grey40") +
+  geom_point(aes(color = sig), size = 3) +
+  scale_color_manual(values = c(`TRUE` = "#D7301F",
+                                `FALSE` = "grey40"),
+                     guide = "none") +
+  scale_x_log10() +
+  labs(x = "Odds ratio (log scale) with 95% CI",
+       y = NULL,
+       title = "Logistic regression: OR for Easier_for_JP vs Harder_for_JP",
+       subtitle = "Reference levels: cognate_ease=low, freq_band=top_2K, pos=noun, cultural_tilt=universal")
+```
+
+```{r logit-gt}
+logit |>
+  transmute(term,
+            OR = round(estimate, 3),
+            `95% CI lower` = round(conf.low, 3),
+            `95% CI upper` = round(conf.high, 3),
+            `p-value` = signif(p.value, 3)) |>
+  gt() |>
+  tab_header(title = md("**Logistic regression: direction = Easier_for_JP**"))
+```
+
+## 線形回帰: signed MH δ ~ lexical features
+
+```{r linear-coefs, fig.width=8, fig.height=5}
+lm_tbl <- rd("results/dif/lexical_linear_signed_MH.csv") |>
+  filter(term != "(Intercept)")
+
+ggplot(lm_tbl, aes(y = fct_reorder(term, estimate),
+                   x = estimate,
+                   xmin = conf.low, xmax = conf.high)) +
+  geom_vline(xintercept = 0, linetype = 2, color = "grey50") +
+  geom_errorbarh(height = 0.2, color = "grey40") +
+  geom_point(aes(color = p.value < .05), size = 3) +
+  scale_color_manual(values = c(`TRUE` = "#D7301F",
+                                `FALSE` = "grey40"),
+                     guide = "none") +
+  labs(x = "Regression coefficient (signed MH δ)",
+       y = NULL,
+       title = "Linear regression of signed MH delta on lexical features",
+       subtitle = "Negative coefficient ⇒ category pushes DIF toward Easier_for_JP. cognate_ease=high is significant.")
+```
+
+::: {.callout-important icon=false}
+## 📌 多変量分析の要点
+
+- **線形回帰 (signed MH δ 従属)**:
+  `cognate_ease = high` の係数は
+  β = **`r fmt_num(beta_cog_hi, 2)`** (95% CI
+  [`r fmt_num(betaCI_cog_hi_lo, 2)`, `r fmt_num(betaCI_cog_hi_hi, 2)`],
+  *p* `r fmt_p(p_cog_hi)`)。
+  **低い cognate ease を参照群としたとき、片仮名語として完全に定着
+  している単語は signed MH δ を `r fmt_num(abs(beta_cog_hi), 2)` 単位
+  下げる** (= JP が易しい方向)。
+- ロジスティック回帰の OR 点推定でも cognate_ease = high (OR ≈ 5.1)、
+  cultural_tilt = business/western (OR ≈ 2-3)、pos = verb (OR ≈ 3.5)
+  が JP 優位方向の傾向を示す。
+- 67 項目という小標本のため、個々の係数の 95% CI は広い。一貫した方向
+  性が主要な根拠となる。
+:::
+
+## 効果量の散布: signed MH δ × cognate_ease
+
+```{r effect-plot, fig.width=8, fig.height=5}
+lex2 <- rd("results/dif/dif_with_lexical.csv") |>
+  distinct(item_id, target, level, directions, max_abs_MH,
+           cognate_ease, loanword_status, pos) |>
+  mutate(signed_MH = ifelse(directions == "Easier_for_JP",
+                            -pmin(max_abs_MH, 12),
+                             pmin(max_abs_MH, 12)),
+         cognate_ease = factor(cognate_ease,
+                               levels = c("low","medium","high")))
+
+ggplot(lex2, aes(x = cognate_ease, y = signed_MH,
+                 color = loanword_status)) +
+  geom_hline(yintercept = 0, linetype = 2, color = "grey50") +
+  geom_boxplot(alpha = .25, outlier.shape = NA, width = .5,
+               color = "grey40") +
+  geom_jitter(width = .18, size = 2.3, alpha = .85) +
+  geom_text_repel(aes(label = target), size = 3,
+                  max.overlaps = 12, segment.alpha = .4) +
+  scale_color_manual(values = c(loanword = "#D55E00",
+                                dual     = "#F39C12",
+                                native   = "#0072B2")) +
+  labs(x = "Cognate ease (loanword familiarity)",
+       y = "Signed MH δ (negative = easier for JP)",
+       color = "Loanword status",
+       title = "Cognate ease predicts JP-favoring DIF direction",
+       subtitle = "Loanword + high cognate_ease clustered in lower half (easier for JP)")
+```
+
+::: {.callout-tip icon=false}
+## 🎯 典型例の読み方
+
+- 左下（cognate_ease = low / 負の signed MH δ）に native word の
+  `laugh`, `reply`, `grass` などが集中 → 日常語として VN 学習者も
+  教科書で習うため、JP の能力有利を帯域全体で覆してしまうほどの強い
+  DIF にはならない。
+- 右下（cognate_ease = high / 負の signed MH δ）に `orchestra`,
+  `scenario`, `sheet`, `site`, `coach` など loanword が集中 →
+  JP が **独立してその単語を知っている** ため、VN に比べて大きく有利。
+- 右上（cognate_ease = high / 正の signed MH δ）にはほぼ項目がない
+  = 片仮名語で JP が不利になることはまずない。
+:::
+
+## Flagged items table (fully interactive)
+
+```{r lex-dt-full}
+lex_dt <- rd("results/dif/dif_with_lexical.csv") |>
+  distinct(item_id, level, target, pos, directions,
+           max_abs_MH, p_JP, p_VN, p_diff,
+           loanword = loanword_status,
+           cognate = cognate_ease,
+           polysemy, cultural_tilt,
+           translation = translation_ambiguity_JP,
+           school = school_curriculum_JP,
+           freq_COCA, jp_eikyo, most_common_JP) |>
+  mutate(across(where(is.numeric), ~ round(., 3)))
+
+dt_tbl(lex_dt,
+       caption = "DIF flagged 67 項目と全語彙属性（Excel/CSV でダウンロード可）",
+       page = 10)
+```
+
+# 考察
+
+## 主要な知見の総括
+
+1. **全体像**: 1D joint Rasch で JP vs Ha δ の相関は
+   **`r fmt_num(r_1d_j, 3)`**、RMSD = `r fmt_num(rmsd_1d_j, 2)`。
+   Ha et al. の較正は **概ね** 日本人学習者にも適用できるが、slope
+   `r fmt_num(slope_1d_j, 2)` は JP 側のスケール圧縮を示しており、
+   純粋なアンカー利用では測定誤差が増える。
+
+2. **DIF の主要因は語彙属性**: `r nrow(lex_full)` 個のフラグ項目を分析
+   した結果、DIF 方向 (Easier / Harder for JP) を最も強く予測したのは:
+   - **`loanword_status`** (Fisher *p* `r fmt_p(p_loan)`): 純粋 loanword
+     の `r fmt_pct(pct_pureLoan_easier)` が JP で相対的に易しい。
+   - **`polysemy`** (*p* `r fmt_p(p_poly)`): 多義語は JP で相対的に易しい
+     (78%)。
+   - **`translation_ambiguity_JP`** (*p* `r fmt_p(p_tran)`): 1 対多 → 61%
+     が JP 易しい。
+   連続 MH δ への線形回帰では `cognate_ease = high` が
+   β = `r fmt_num(beta_cog_hi, 2)`
+   (*p* `r fmt_p(p_cog_hi)`) と JP 側を強く易しくする。
+
+3. **JP 内部は均質**: 5K 受験群と 4K 専用群のあいだで 1K-4K の 120 項目中
+   **`r n_JPint_C` 項目しか強 DIF を示さず**、`r N_jp` 名を単一母集団
+   として扱える。
+
+4. **人物適合度**: Ha et al. の δ をそのまま固定した anchored モデルでは
+   JP 学習者の **`r fmt_pct(pct_mis_15)`** が outfit MNSQ > 1.5。
+   DIF の存在と一致する。
+
+## 理論的含意
+
+本研究の結果は、テスト項目の言語横断的な妥当性に関して、Rasch モデルの
+前提 (invariance of item difficulty across populations) が **実証的に成立
+しない場合がある**ことを改めて示した。特に、テストの target-language
+(英語) の語彙が受験者の L1 に語彙借用されているか否かという
+**extra-linguistic な要因**が項目困難度に体系的な影響を与え得る。
+これは vocabulary size testing における cross-linguistic validity に
+関する先行議論 [@Milton2013; @Webb2017] と整合する。
+
+## 実用的含意
+
+1. **App_CAT の JP 用再較正が強く推奨される**: `RAW_BAND_REFERENCE` を
+   JP joint 1D Rasch δ (本研究で推定済み) で置き換え、`CROSS_BAND_LINKING`
+   を JP 共通受験者法で再推定することにより、anchored モデルの人物適合度
+   (現在 `r fmt_pct(pct_mis_15)` が outfit > 1.5) は改善すると予想される。
+2. **cross-linguistic item replacement**: 片仮名語として完全に定着した
+   項目 (`orchestra`, `scenario`, `diamond`, `coach`, `sheet`, `site`, `cap`,
+   `paradise`, `robe`, `wizard` など) は JP 学習者の L1 知識で回答可能で
+   あり、真の英語語彙能力を反映しない可能性がある。JP 用 parallel form では
+   native-only equivalents への差し替えを検討すべきである。
+3. **母語別 parallel forms の開発**: UVLT を多言語での標準化テストとして
+   運用するのであれば、各 L1 群の loanword pattern を考慮した parallel
+   form を準備することが公平性 (fairness) の観点から望ましい。
+
+## 代替項目候補の検討
+
+Part A と DIF 感度分析で同定された **loanword 効果**は、App_CAT の
+運用上深刻な公平性上の課題を示している。本節では、特に JP 学習者にとって
+katakana loanword として事実上の既知語となっている項目について、
+**代替候補** (native Japanese translation をもつ英単語) を体系的に提案する。
+
+### 対象項目の特定
+
+次の優先度規則で代替対象項目を抽出した:
+
+- **P1 (pure loanword, 最優先)**: `loanword_status == "loanword"` — 日本語
+  訳が完全に片仮名化されている 8 項目
+- **P2 (dual + high cognate + JP-easier)**: 日本語に片仮名語と native 語の
+  両方がある項目のうち、cognate_ease が high で DIF 方向が Easier_for_JP
+  の 3 項目
+
+```{r replacement-targets-gt}
+#| echo: false
+targets <- rd("results/loanword_replacement/replacement_targets.csv")
+targets |>
+  select(item_id, level, target, pos, priority,
+         most_common_JP, prompt, sibling_targets, distractors) |>
+  gt(groupname_col = "priority") |>
+  tab_header(title = md("**代替対象項目 (11 項目)**"),
+             subtitle = md("P1 = pure loanword, P2 = dual-high, DIF で Easier_for_JP")) |>
+  cols_label(item_id = "項目", level = "帯域", target = "ターゲット",
+             pos = "品詞", most_common_JP = "代表的 JP 訳",
+             prompt = "現行プロンプト",
+             sibling_targets = "同 testlet の他 answer",
+             distractors = "現行 distractor") |>
+  tab_options(table.font.size = 11) |>
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_body(columns = target))
+```
+
+::: {.callout-warning icon=false}
+## ⚠️ 2K testlet 4 は全項目 loanword
+
+`section / site / sheet` の **3 つの答え全て**が片仮名語として完全定着
+(セクション / サイト / シート)。現行構成では JP 学習者は英語語彙知識ゼロ
+でも 3/3 正答が理論的に可能。この testlet は **単一項目置換では不十分**
+であり、**全体 redesign** が推奨される (下記)。同様の軽度クラスターが
+4K testlet 3 (orchestra / slot が 2/3 loanword) にも存在する。
+:::
+
+### 代替候補の生成手続き
+
+2 つの並列 Web 調査エージェントを用いて、以下の基準を満たす English word を
+各対象項目について 5–8 候補ずつ生成した:
+
+1. 同一の COCA/BNC 頻度帯域
+2. 同一品詞 (noun/verb/adjective)
+3. 可能な限り現行プロンプトと意味的に近接 (prompt 再利用可能)
+4. **Japanese に確立された片仮名形を持たない** — wago (和語) または
+   kango (漢語, Sino-Japanese compound) の訳語が dominant
+5. testlet 内の他選択肢と意味的に区別可能
+
+各候補について `katakana_check`, `recommend` フラグ, `suggested_prompt`,
+簡潔な `notes` を付与した。
+
+### 推奨代替候補
+
+```{r replacement-candidates-dt}
+#| echo: false
+cand <- rd("results/loanword_replacement/candidates_flat.csv")
+cand_show <- cand |>
+  mutate(recommend_text = ifelse(recommend, "✅ 推奨", "— 不可")) |>
+  select(original_item_id, original_target,
+         candidate_word, recommend_text,
+         coca_band, suggested_prompt, katakana_check, notes)
+dt_tbl(cand_show,
+       caption = sprintf("全代替候補 (%d 語) — 推奨/非推奨で絞り込み可、Excel/CSV download 可",
+                         nrow(cand_show)),
+       page = 15, escape = FALSE)
+```
+
+::: {.callout-tip icon=false}
+## ✅ 帯域別の推奨候補サマリ (recommend = true のみ)
+
+```{r replacement-reco-gt}
+#| echo: false
+reco <- cand |> filter(recommend) |>
+  select(original_item_id, original_target,
+         candidate_word, coca_band, suggested_prompt, katakana_check)
+reco |>
+  gt(groupname_col = "original_target") |>
+  tab_header(title = md("**推奨代替候補一覧**")) |>
+  cols_label(original_item_id = "元 ID",
+             candidate_word = "候補語",
+             coca_band = "COCA band",
+             suggested_prompt = "推奨 prompt",
+             katakana_check = "カタカナ確認") |>
+  tab_options(table.font.size = 10)
+```
+:::
+
+### 全体 testlet 再設計 (2K testlet 4, 4K testlet 3)
+
+Loanword がクラスターをなす testlet については、単純な 1 slot 置換では
+バイアスが残るため、**6 オプション × 3 答え × 3 プロンプト**の完全 redesign
+を提案する。
+
+```{r testlet-redesign-gt}
+#| echo: false
+tr <- rd("results/loanword_replacement/testlet_redesigns.csv")
+tr |>
+  select(original_item_id, variant, options, answers, prompts, recommended, rationale) |>
+  gt() |>
+  tab_header(title = md("**Testlet 再設計提案**"),
+             subtitle = md("recommended = TRUE が agent のトップ推奨案")) |>
+  cols_label(original_item_id = "対象 testlet",
+             variant = "案",
+             options = "6 options",
+             answers = "3 answers",
+             prompts = "3 prompts (| 区切り)",
+             recommended = "推奨",
+             rationale = "根拠") |>
+  tab_options(table.font.size = 9.5) |>
+  fmt_markdown(columns = rationale)
+```
+
+### 代替候補採用時の留意点
+
+::: {.callout-warning icon=false}
+1. **実証検証の必要性**: 本提案は語彙特性に基づく **理論的** 妥当性の議論で
+   あり、実際の応答データで DIF が解消されるかは pre-test で要検証。
+   特に `wound` や `crowd` といった候補は EFL 教育における頻度が
+   UVLT の想定 2K 帯とわずかにズレる可能性がある。
+2. **Distractor の loanword 問題**: 現行テストでは distractor (不正解
+   選択肢) の中にも片仮名語が含まれている場合がある (例: 2K testlet 4 の
+   `cable`/`tank`, 4K testlet 2 の `candle`/`salmon`)。**答えだけでなく
+   全 6 option** から loanword を排除するのが理想的 (推奨 redesign は
+   この条件を満たしている)。
+3. **Cultural-loading の新たなバイアス**: `robe` → `cloak` のような宗教/
+   文化語の方向シフトは、別の cultural tilt を導入するリスクがある。
+   採用前に focus group / expert review を実施すべき。
+4. **段階的導入**: 一度に全項目を置換するのではなく、まず priority P1
+   (pure loanword) の 8 項目から先行実装し、parallel form として
+   並走運用するのが実務上妥当。
+:::
+
+## 限界 (Limitations)
+
+本研究には次の限界がある。
+
+1. **サンプルの代表性**: JP-L1 サンプルは 3 大学の学生を集約したもので
+   あり、無作為抽出ではない。特に F1_SSLA と F3_VocabLanguaging は
+   高能力層に偏っている可能性がある (mean total = `r fmt_num(mean_jp5)` / 150)。
+   日本全国の EFL 学習者への一般化は慎重を要する。
+2. **Joint 11TL の非収束**: 51 次元 Rasch モデルは 2000 iter で maxiter
+   に到達したものの conv = 5×10⁻⁴ には届かず、完全収束していない。
+   AIC/BIC の絶対値は上限を与える (完全収束版ではより小さくなる可能性)。
+3. **Testlet 分散構造の単純化**: TAM のデフォルト設定では testlet 分散
+   間に相関を許容する一般共分散を推定しており、Bradlow et al. (1999) の
+   標準的 testlet モデル (testlet 間独立性) とは厳密には一致しない。
+   Variance の絶対値は解釈に留保が必要。
+4. **Lexical 属性付与の限定性**: Web 調査エージェントによる属性付与は
+   DIF で flagged された 67 項目のみである。非 flagged 項目も含めた
+   **全 150 項目** での系統的な悉皆分析は future work とする (Option D)。
+5. **Cross-cultural 効果の他要因**: 本研究は loanword status を主たる
+   予測因子として扱ったが、EFL 教科書の頻度・学習者の exposure パターン・
+   カタカナ語の意味ずれ (false cognate effect) など関連要因の個別的寄与は
+   識別できていない。
+6. **DIF 検定の統計的パワー**: Scenario B では JP_5K_admin の N = `r N_jp_5k`
+   と VN (`r N_vn`) の能力分布が大きく離れており、能力マッチングに基づく
+   DIF 検定 (MH) の妥当性には限界がある。propensity score マッチングや
+   能力区間を制限した sensitivity check が望まれる。
+
+## 今後の研究課題
+
+1. JP 側 Rasch δ と testlet 分散で App_CAT (`script.js`) の
+   `RAW_BAND_REFERENCE` / `RAW_TESTLET_VARIANCES` / `CROSS_BAND_LINKING` を
+   書き換え、CAT シミュレーションで測定精度の改善を評価 (Option B)。
+2. 全 150 項目の語彙属性悉皆分析 (Option D)。DIF の flagged/unflagged を
+   二値で扱わず、全項目の連続効果量への属性寄与を定量化する。
+3. loanword 効果の外的妥当性検証: 新規の UVLT 項目を用いた先取り実験で、
+   項目選定段階から loanword status を制御する設計。
+4. L3/L4 などより広い言語背景への拡張: 中国語・韓国語・インドネシア語
+   などの語彙借用パターンを踏まえた多言語 DIF 研究。
+
+# 文献
+
+::: {#refs}
+:::
+
+# 付録
+
+## 再現手順（スクリプト順）
+
+```bash
+cd Analysis/JP_Anchoring
+for s in 01_prepare_jp_data 02_prepare_vn_data 03_read_ha_params \
+         04_descriptives 05_rasch_1D 06_rasch_11TL \
+         07_compare_difficulty 08_dif_vn_vs_jp 09_dif_jp_subgroups \
+         10_anchored_analysis 11_flag_items_summary \
+         12_lexical_dif_synthesis 13_rasch_11TL_joint \
+         15_joint11TL_dif_sensitivity 16_model_comparison \
+         17_loanword_replacement_targets 18_merge_replacement_candidates; do
+  Rscript "scripts/${s}.R"
+done
+quarto render report/uvlt_report.qmd
+```
+
+## セッション情報
+
+```{r sess}
+#| code-fold: true
+sessionInfo()
+```

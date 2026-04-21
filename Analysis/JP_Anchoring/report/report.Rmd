@@ -1,0 +1,394 @@
+---
+title: "UVLT Anchor Analysis: Vietnamese L1 (Ha et al. 2025) vs. Japanese L1"
+author: "Analysis pipeline under Analysis/JP_Anchoring"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    theme: flatly
+    df_print: paged
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      fig.width = 7.5, fig.height = 5)
+library(readr); library(dplyr); library(tidyr); library(stringr)
+library(knitr); library(ggplot2)
+
+find_project_root <- function(start = getwd()) {
+  path <- normalizePath(start, winslash = "/", mustWork = TRUE)
+  repeat {
+    if (all(dir.exists(file.path(path, c("Analysis", "App_CAT", "Manuscript", "Readings"))))) {
+      return(path)
+    }
+    parent <- dirname(path)
+    if (identical(parent, path)) {
+      stop("Could not locate the UVLT_CAT project root.", call. = FALSE)
+    }
+    path <- parent
+  }
+}
+
+resolve_project_root <- function() {
+  args <- commandArgs(trailingOnly = FALSE)
+  file_arg <- "--file="
+  file_path <- sub(file_arg, "", args[startsWith(args, file_arg)])
+
+  if (length(file_path) >= 1L && file.exists(file_path[1])) {
+    return(find_project_root(dirname(file_path[1])))
+  }
+
+  if (requireNamespace("knitr", quietly = TRUE)) {
+    input_dir <- tryCatch(knitr::current_input(dir = TRUE), error = function(e) "")
+    if (nzchar(input_dir) && dir.exists(input_dir)) {
+      return(find_project_root(input_dir))
+    }
+  }
+
+  find_project_root(getwd())
+}
+
+root <- resolve_project_root()
+ana  <- file.path(root, "Analysis", "JP_Anchoring")
+rd   <- function(p) read_csv(file.path(ana, p), show_col_types = FALSE)
+
+persons <- rd("data/processed/jp_person_info.csv")
+items   <- rd("data/processed/jp_item_info.csv")
+ha      <- rd("data/processed/ha_params.csv")
+link    <- rd("data/processed/cross_band_linking.csv")
+item_p  <- rd("results/descriptives/item_p_wide.csv")
+grp_sum <- rd("results/descriptives/group_summary.csv")
+alpha   <- rd("results/descriptives/cronbach_alpha.csv")
+c1D_pl  <- rd("results/comparison/cmp_1D_perlevel_vs_Ha.csv")
+c1D_j   <- rd("results/comparison/cmp_1D_joint_vs_Ha.csv")
+c11_pl  <- rd("results/comparison/cmp_11TL_perlevel_vs_Ha.csv")
+difA    <- rd("results/dif/dif_scenarioA_JPall_vs_VN.csv")
+difB    <- rd("results/dif/dif_scenarioB_JP5K_vs_VN.csv")
+difJ    <- rd("results/dif/dif_JPsub_5Kadmin_vs_4Konly.csv")
+anc_pl  <- rd("results/anchored/theta_anchored_perlevel.csv")
+anc_j   <- rd("results/anchored/theta_anchored_joint_linked.csv")
+pfit    <- rd("results/anchored/person_fit_anchored.csv")
+```
+
+# 概要
+
+本報告は、Ha et al. (2025) がベトナム語母語 (VN-L1) 311名を対象に
+ConQuest で較正した UVLT の項目困難度が、日本語母語 (JP-L1) の大学生
+にも適用できるかを Rasch 分析 (1次元 Rasch と 11-testlet Rasch) と
+DIF 解析によって検討する。解析で使用した Japanese 被験者は **312名**
+(F1_SSLA 161名 + F2_LGCTGC 117名 + F3_VocabLanguaging 34名)。
+
+# サンプルの記述統計
+
+```{r}
+grp_sum |>
+  rename_with(~ str_replace_all(., "score_", "")) |>
+  kable(digits = 2, caption = "Mean (_m) and SD (_s) per level by sample group")
+```
+
+内的整合性 (Cronbach's α, 帯域別):
+
+```{r}
+alpha |>
+  pivot_wider(names_from = level, values_from = alpha) |>
+  kable(digits = 3, caption = "Cronbach's alpha")
+```
+
+# 項目困難度の直接比較
+
+## 1D Rasch, 帯域別 (Ha et al. の 1-1 モデルと対応)
+
+```{r}
+c1D_pl |>
+  filter(comparison != "VN_refit vs Ha_1D") |>
+  mutate(comparison = str_replace(comparison, " vs Ha_1D", "")) |>
+  arrange(level, comparison) |>
+  select(level, comparison, n, r, RMSD, slope, intercept, bias) |>
+  kable(digits = 3,
+        caption = "JP vs Ha et al. 1D Rasch delta, per level")
+```
+
+再較正の妥当性確認として、私の手で Winsteps データから再計算した VN 側は
+Ha et al. の元パラメタとほぼ完全に一致 (r ≈ 1.00, RMSD ≤ 0.16) しており、
+パイプラインが正しく動いていることを保証している。
+
+## 1D Rasch, 150 項目 joint
+
+```{r}
+c1D_j |>
+  filter(!str_detect(comparison, "VN_refit")) |>
+  select(comparison, n, r, RMSD, slope, intercept, bias) |>
+  kable(digits = 3,
+        caption = "JP vs Ha et al. 1D joint (150-item concatenated)")
+```
+
+joint では `JP_all vs Ha_1D` で r = `r round(c1D_j$r[c1D_j$comparison=="JP_all vs Ha_1D (joint)"], 3)`、
+RMSD = `r round(c1D_j$RMSD[c1D_j$comparison=="JP_all vs Ha_1D (joint)"], 2)`。
+slope ≈ 0.73, intercept ≈ -0.82 であり、JP 側の δ が VN より圧縮され
+下方シフトしている (つまり、VN では難しい項目ほど JP では相対的に易しく
+見える傾向)。
+
+## 11TL Rasch, 帯域別 (App_CAT と同じ構造)
+
+```{r}
+c11_pl |>
+  filter(!str_detect(comparison, "VN_refit")) |>
+  mutate(comparison = str_replace(comparison, " vs Ha_11TL", "")) |>
+  arrange(level, comparison) |>
+  select(level, comparison, n, r, RMSD, slope) |>
+  kable(digits = 3, caption = "JP vs Ha et al. 11TL Rasch delta, per level")
+```
+
+11TL は 1D よりやや相関が下がる傾向があるが、これはテストレット次元の
+分散推定が小標本 (特に JP_5K_admin の1K帯) で不安定になるため。
+両モデルとも 1K と 5K は相関が低く (r ≈ .5–.7)、2K–4K は中程度 (r ≈ .7–.8)。
+
+# DIF 解析
+
+## シナリオ A: JP_all (N=312) vs VN (N=311), 1K–4K 120 項目
+
+Mantel-Haenszel purified chi-square、ETS 分類 (A=ほぼ無DIF, B=弱中DIF, C=強DIF):
+
+```{r}
+difA |> count(level, ETS_cat) |>
+  pivot_wider(names_from = ETS_cat, values_from = n, values_fill = 0) |>
+  mutate(total = A + B + C) |>
+  kable(caption = "ETS category counts (Scenario A, 120 items)")
+```
+
+ETS=C (強DIF) 項目 = **`r sum(difA$ETS_cat == "C")` / 120** (`r round(100*mean(difA$ETS_cat=="C"),1)`%)。
+
+```{r}
+difA |> filter(ETS_cat == "C") |>
+  select(item_id, level, target, MH_chi, MH_delta, MH_pval_adj) |>
+  arrange(level, desc(abs(MH_delta))) |>
+  kable(digits = 3, caption = "ETS=C flagged items (Scenario A)")
+```
+
+## シナリオ B: JP_5K_admin (N=195) vs VN (N=311), 1K–5K 150 項目
+
+```{r}
+difB |> count(level, ETS_cat) |>
+  pivot_wider(names_from = ETS_cat, values_from = n, values_fill = 0) |>
+  mutate(total = A + B + C) |>
+  kable(caption = "ETS category counts (Scenario B, 150 items)")
+```
+
+特に 5K で 30 項目中 `r sum(difB$ETS_cat == "C" & difB$level == "5K")`
+項目が強DIF となる点が顕著。これは JP_5K_admin が高能力サブサンプルで
+あることと、VN サンプルとの能力分布ギャップが寄与していると推察される。
+
+```{r}
+difB |> filter(ETS_cat == "C") |>
+  select(item_id, level, target, MH_chi, MH_delta, MH_pval_adj) |>
+  arrange(level, desc(abs(MH_delta))) |>
+  kable(digits = 3, caption = "ETS=C flagged items (Scenario B)")
+```
+
+## JP 内部 DIF: 5K受験群 (N=195) vs 4K受験群 (N=117)
+
+```{r}
+difJ |> count(level, ETS_cat) |>
+  pivot_wider(names_from = ETS_cat, values_from = n, values_fill = 0) |>
+  mutate(total = A + B + C) |>
+  kable(caption = "ETS category counts (JP internal, 1K-4K)")
+```
+
+強DIF は `r sum(difJ$ETS_cat == "C")` 項目のみ
+(`r paste(difJ$item_id[difJ$ETS_cat == "C"], collapse=", ")`)。
+312 名を単一母集団として扱うことに大きな問題はない。
+
+# アンカー推定
+
+## 帯域別アンカー (Ha et al. 1D δ を固定, JP θ を推定)
+
+```{r}
+anc_pl |> group_by(level) |>
+  summarise(N = n(),
+            mean_theta = mean(theta_anchored),
+            sd_theta   = sd(theta_anchored),
+            mean_SE    = mean(se),
+            .groups = "drop") |>
+  kable(digits = 3)
+```
+
+## App_CAT 線形化スケール (Ha 11TL × slope + intercept)
+
+```{r}
+anc_j |> group_by(sample_group) |>
+  summarise(N = n(),
+            mean_theta = mean(theta_linked_anchored),
+            sd_theta   = sd(theta_linked_anchored),
+            mean_SE    = mean(se),
+            .groups = "drop") |>
+  kable(digits = 3,
+        caption = "JP anchored theta on the App_CAT linked scale")
+```
+
+## 人物適合度
+
+```{r}
+pfit |>
+  summarise(across(c(outfit_mnsq, infit_mnsq),
+                   list(mean = ~mean(.x, na.rm=TRUE),
+                        sd   = ~sd(.x, na.rm=TRUE),
+                        p90  = ~quantile(.x, .9, na.rm=TRUE),
+                        max  = ~max(.x, na.rm=TRUE)))) |>
+  kable(digits = 3, caption = "Person fit under Ha-anchored model")
+
+mis_pct <- 100 * mean(pfit$outfit_mnsq > 1.5, na.rm = TRUE)
+```
+
+Outfit MNSQ > 1.5 の人物は **`r round(mis_pct, 1)`%**。Ha et al. の
+項目困難度をそのまま適用すると、JP 学習者の 4割強が不適合。この値は
+標本差 (ceiling effect) と項目機能差 (DIF) の両方を反映している。
+
+# 結論
+
+1. **全体像として**: JP_all vs Ha 1D joint で r = 0.89, RMSD = 1.29 と
+   "ほどよい"一致があるが、slope ≈ 0.73 は VN→JP で項目困難度が圧縮
+   する傾向を示す。
+2. **帯域ごと**: 1K は JP で天井効果があり推定が不安定。3K–4K が
+   最も頑健に再現される。2K と 5K は差が大きい。
+3. **DIF**: Scenario A では 120 項目中 42 項目 (35%) が ETS=C。5K を
+   含めると更に増える。項目レベルでは JP で相対的に易しい単語
+   (e.g. 外来語化している単語) と難しい単語 (e.g. 頻度が低い動詞・
+   形容詞) が分かれる可能性が高い。
+4. **JP 内部の均質性**: 5K 受験群と 4K 受験群は 1K–4K 共通項目で
+   2 項目しか C にならず、ひとつの母集団として扱ってよい。
+5. **実用的含意**: Ha et al. の δ を "そのまま" JP に適用するより、
+   JP 側で再キャリブレーションして App_CAT の `RAW_BAND_REFERENCE`
+   を置き換える (または JP 用の並行版を作る) 方が、推定精度が上がる
+   と考えられる。特に 2K, 5K の項目は見直しが妥当。
+6. **次の検討項目**:
+   * flagged items (ETS=C) の意味論的特徴調査 (外来語か否か、頻度、
+     日本語訳語の一対一度)。
+   * JP 側 Rasch δ を用いた App_CAT `RAW_BAND_REFERENCE` 更新と
+     `CROSS_BAND_LINKING` 再推定。
+   * JP 側の testlet variance の再見積 (11TL 分散は VN 側と桁で
+     揃わないことが多い)。
+
+# Part A: DIF項目の語彙属性分析
+
+DIF で ETS=C にフラグされた 67 項目について、語彙属性を Web 調査で収集
+し、**どのような特徴を持つ単語が日本語母語話者にとって相対的に易しい
+(Easier_for_JP) / 難しい (Harder_for_JP) のか** を検定する。
+
+調査属性（3 つの並列エージェントが収集）:
+
+- **Gairaigo/Loanword** — 日本語訳が片仮名（外来語）か native（漢字・ひらがな）か
+- **Cognate ease** — 片仮名語として定着している度合い (`high` / `medium` / `low`)
+- **Frequency** — COCA/BNC 帯域、JP 英語教科書での露出度 (`jp_eikyo`)
+- **Genre skew** — academic / fiction / spoken / technical / balanced
+- **Concreteness / polysemy** — 物理具体性・多義性
+- **Cultural tilt** — universal / western / business_academic
+- **Translation ambiguity** — 日本語訳が 1 対 1 か 1 対多か
+- **School curriculum JP** — JP 英語教育での導入時期 (early / mid / late)
+
+## 一変量 Fisher's exact test (feature × 方向)
+
+```{r}
+fisher_tbl <- rd("results/dif/lexical_fisher_summary.csv")
+kable(fisher_tbl, digits = 3,
+      caption = "Fisher's exact test (simulated p) — feature vs DIF direction")
+```
+
+**有意な予測因子** (p < .05):
+
+1. **translation_ambiguity_JP** p = .004 — `one_to_many` は 61% が Easier_for_JP、
+   `one_to_one` は 23% のみ。
+2. **polysemy** p = .014 — `high_poly` 78% vs `mono` 23%。
+3. **loanword_status** p = .026 — 片仮名化された **loanword** は
+   **87.5%** が Easier_for_JP（native 35%, dual 37%）。
+
+## 特徴別の Easier_for_JP 比率
+
+```{r}
+pct <- rd("results/dif/lexical_pct_easier_JP.csv")
+pct |>
+  mutate(prop_easier_JP = round(100 * prop_easier_JP, 1)) |>
+  kable(caption = "% of flagged items easier for JP (within each feature level)")
+```
+
+### 可視化
+
+```{r fig.width=7, fig.height=4}
+knitr::include_graphics(file.path(ana, "results/dif/lex_stack_cognate_ease.png"))
+knitr::include_graphics(file.path(ana, "results/dif/lex_stack_has_katakana.png"))
+knitr::include_graphics(file.path(ana, "results/dif/lex_stack_culture.png"))
+knitr::include_graphics(file.path(ana, "results/dif/lex_signed_MH_by_cognate.png"))
+```
+
+## 多変量モデル
+
+### ロジスティック回帰 (`direction = Easier_for_JP`)
+
+```{r}
+logit_tbl <- rd("results/dif/lexical_logistic_main.csv")
+logit_tbl |>
+  mutate(across(c(estimate, conf.low, conf.high),
+                ~ format(round(., 3), scientific = FALSE))) |>
+  select(term, OR = estimate, conf.low, conf.high, p.value) |>
+  kable(caption = "Logistic regression: direction = Easier_for_JP (OR from tidy+exp)")
+```
+
+### 線形回帰 (`signed MH delta` = 負側ほど JP が易しい)
+
+```{r}
+lm_tbl <- rd("results/dif/lexical_linear_signed_MH.csv")
+lm_tbl |> kable(digits = 3,
+                caption = "Linear regression: signed MH delta ~ lexical features")
+```
+
+**主な所見:**
+
+- `cognate_ease = high` は signed MH δ を -3.71 下げる (95%CI [-6.82, -0.60], p = .020)。
+  つまり「片仮名語として定着している単語」は、**JP 話者にとって約 3.7 δ
+  単位ぶん易しい**方向に偏る。
+- ロジスティックの OR 点推定でも、cognate_ease high (OR 5.11) と
+  pos=verb (OR 3.51)、cultural_tilt=business/western (OR 3.04) が JP 優位方向。
+- 多変量モデルは N=67 の制約で個別係数の CI は広いが、方向は一貫している。
+
+## 解釈と含意
+
+1. **外来語効果が中心的**: UVLT 項目における JP-VN の DIF の主要因は
+   「ターゲット語が日本語で普及した片仮名語かどうか」にある。片仮名語化
+   されている項目は JP で 87.5%（VN より相対的に易しい）。
+2. **多義性 / 1-to-many translation も JP 優位**: これらは往々にして
+   片仮名語と重なるが、`coach`, `note`, `capture` のように多義で
+   片仮名語と重なる単語は特に JP で過度に易しくなる。
+3. **Universal/日常語が JP で相対的に難しい**: たとえば `grass`, `laugh`,
+   `reply`, `bring` は VN では基本語として扱われているが、JP では
+   語彙サイズテストの段階で過小評価されやすい（天井近くで VN の方が
+   p_correct 高い）。
+4. **Western 文化語**: `wizard`, `pirate`, `paradise`, `sanctuary` は
+   JP でも映画・ゲーム経由で露出が高く、必ずしも不利にならない。
+
+## 実用的提言
+
+- **App_CAT の `RAW_BAND_REFERENCE` を JP 用に置き換える**: 特に 3K-5K の
+  片仮名語バイアスがある項目は JP δ を用いた方が能力推定精度が上がる。
+- **項目差し替え候補**: 極端な JP-loanword 項目（`orchestra`, `scenario`,
+  `diamond`, `coach`, `sheet` 等）は代替案（native-only equivalents）
+  への差し替えを検討する。
+- **平行形式の検討**: 英語学習コンテクスト (EIKEN, CEFR 対応) に合わせ、
+  JP 用の等価形式を作ると CAT の公平性が高まる。
+
+# 使用スクリプト (再現手順)
+
+```
+scripts/01_prepare_jp_data.R       — Excel → 312×150 応答行列
+scripts/02_prepare_vn_data.R       — Winsteps → 311×150 応答行列
+scripts/03_read_ha_params.R        — ConQuest prm → 1D/11TL δ
+scripts/04_descriptives.R          — 記述統計, alpha, p-value 散布
+scripts/05_rasch_1D.R              — 1D per-level + joint (TAM)
+scripts/06_rasch_11TL.R            — 11TL per-level (TAM, Q-matrix)
+scripts/07_compare_difficulty.R    — δ 比較 (scatter, RMSD, slope)
+scripts/08_dif_vn_vs_jp.R          — VN vs JP DIF (A & B)
+scripts/09_dif_jp_subgroups.R      — JP 内部 DIF
+scripts/10_anchored_analysis.R     — Ha δ 固定で JP θ を推定
+scripts/11_flag_items_summary.R    — DIF フラグ統合 + 方向コーディング
+scripts/12_lexical_dif_synthesis.R — 語彙属性×DIF 方向の検定・回帰
+```

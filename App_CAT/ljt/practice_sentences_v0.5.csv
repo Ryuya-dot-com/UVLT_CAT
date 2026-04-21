@@ -1,0 +1,21 @@
+item_id,target_word,target_level,target_POS,condition,foil_type,sentence_text
+p01_app,eat,practice,verb,appropriate,NA,She eats fresh vegetables every day.
+p01_inapp,eat,practice,verb,inappropriate,a_selectional,She eats fresh silence every day.
+p02_app,jump,practice,verb,appropriate,NA,The children jump on the mattress loudly.
+p02_inapp,jump,practice,verb,inappropriate,a_selectional,The opinions jump on the mattress loudly.
+p03_app,sing,practice,verb,appropriate,NA,They sing old songs on weekends.
+p03_inapp,sing,practice,verb,inappropriate,a_selectional,They sing old bricks on weekends.
+p04_app,buy,practice,verb,appropriate,NA,She buys fresh fish at the market.
+p04_inapp,buy,practice,verb,inappropriate,a_selectional,She buys fresh darkness at the market.
+p05_app,meet,practice,verb,appropriate,NA,We met our teacher in the library.
+p05_inapp,meet,practice,verb,inappropriate,a_selectional,We met our sunlight in the library.
+p06_app,start,practice,verb,appropriate,NA,The game starts at seven tonight.
+p06_inapp,start,practice,verb,inappropriate,a_selectional,The table starts at seven tonight.
+p07_app,cook,practice,verb,appropriate,NA,She cooks dinner for her family.
+p07_inapp,cook,practice,verb,inappropriate,a_selectional,She cooks thunder for her family.
+p08_app,listen,practice,verb,appropriate,NA,She listens to music after dinner.
+p08_inapp,listen,practice,verb,inappropriate,a_selectional,She listens to colors after dinner.
+p09_app,distance,practice,noun,appropriate,NA,The distance to the station is long.
+p09_inapp,distance,practice,noun,inappropriate,b_collocation,The distance to the station is tall.
+p10_app,smile,practice,noun,appropriate,NA,Her smile looked very warm tonight.
+p10_inapp,smile,practice,noun,inappropriate,b_collocation,Her smile looked very rectangular tonight.

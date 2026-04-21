@@ -1,0 +1,24 @@
+# App_CAT/tools/ Python dependencies
+# For generate_ljt_audio.py, validate_ljt_sentences.py, and related utilities.
+#
+# Install with:
+#   pip install -r tools/requirements.txt
+#
+# For sentence validation (§11.4), also install the spaCy English model:
+#   python -m spacy download en_core_web_sm
+
+# Simulation / linking
+numpy>=1.24.0
+py-mini-racer>=0.6.0
+
+# Audio generation (B)
+google-cloud-texttospeech>=2.16.0
+librosa>=0.10.0
+pyloudnorm>=0.1.1
+soundfile>=0.12.0
+
+# Sentence validation (B-2)
+spacy>=3.7.0
+
+# Dev / CI (optional but recommended per design spec §13.1)
+# detect-secrets>=1.4.0
