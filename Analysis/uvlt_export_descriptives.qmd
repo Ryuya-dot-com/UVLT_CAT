@@ -1,0 +1,827 @@
+---
+title: "UVLT CAT + LJT Descriptive Report"
+subtitle: "Workbook descriptives and visualizations"
+lang: ja
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: show
+    df-print: paged
+execute:
+  echo: false
+  warning: false
+  message: false
+params:
+  export_xlsx: ""
+---
+
+```{r}
+required_packages <- c(
+  "readxl", "dplyr", "tidyr", "stringr", "purrr",
+  "ggplot2", "scales", "gt", "glue", "jsonlite", "forcats"
+)
+
+missing_packages <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
+
+if (length(missing_packages)) {
+  stop(
+    paste(
+      "Missing R packages:",
+      paste(missing_packages, collapse = ", "),
+      "\nInstall them before rendering this report."
+    ),
+    call. = FALSE
+  )
+}
+
+suppressPackageStartupMessages({
+  library(readxl)
+  library(dplyr)
+  library(tidyr)
+  library(stringr)
+  library(purrr)
+  library(ggplot2)
+  library(scales)
+  library(gt)
+  library(glue)
+  library(jsonlite)
+  library(forcats)
+})
+
+options(
+  dplyr.summarise.inform = FALSE,
+  scipen = 999
+)
+
+base_required_sheets <- c(
+  "summary",
+  "band_diagnostics",
+  "testlet_log",
+  "item_responses",
+  "practice",
+  "estimates",
+  "session_events",
+  "routing_summary",
+  "linking_coeffs",
+  "testlet_variance"
+)
+
+ljt_optional_sheets <- c("ljt_log", "ljt_summary", "ljt_session_meta")
+band_levels <- c("1k", "2k", "3k", "4k", "5k")
+condition_levels <- c("appropriate", "inappropriate")
+
+drop_note_rows <- function(df) {
+  if ("note" %in% names(df)) {
+    df <- df %>% filter(is.na(note) | note != "no data")
+  }
+  df
+}
+
+safe_numeric <- function(x) {
+  suppressWarnings(as.numeric(x))
+}
+
+parse_time <- function(x) {
+  if (is.null(x)) {
+    return(as.POSIXct(character()))
+  }
+
+  x <- as.character(x)
+  x[x == ""] <- NA_character_
+  as.POSIXct(
+    x,
+    tz = Sys.timezone(),
+    tryFormats = c(
+      "%Y-%m-%dT%H:%M:%OS",
+      "%Y-%m-%d %H:%M:%OS",
+      "%Y/%m/%d %H:%M:%OS"
+    )
+  )
+}
+
+parse_flag <- function(x) {
+  if (is.logical(x)) return(x)
+  x <- tolower(trimws(as.character(x)))
+  case_when(
+    x %in% c("true", "t", "1", "yes") ~ TRUE,
+    x %in% c("false", "f", "0", "no") ~ FALSE,
+    TRUE ~ NA
+  )
+}
+
+fmt_num <- function(x, digits = 3) {
+  ifelse(is.na(x), "NA", formatC(x, digits = digits, format = "f"))
+}
+
+fmt_pct <- function(x, digits = 1) {
+  ifelse(is.na(x), "NA", percent(x, accuracy = 10^-digits))
+}
+
+fmt_int <- function(x) {
+  ifelse(is.na(x), "NA", comma(round(as.numeric(x))))
+}
+
+fmt_ms <- function(x) {
+  ifelse(is.na(x), "NA", glue("{fmt_int(x)} ms"))
+}
+
+fmt_min <- function(x) {
+  ifelse(is.na(x), "NA", formatC(as.numeric(x) / 60000, digits = 2, format = "f"))
+}
+
+resolve_export_path <- function(path) {
+  if (nzchar(path)) {
+    return(normalizePath(path, winslash = "/", mustWork = TRUE))
+  }
+
+  candidates <- list.files(
+    path = ".",
+    pattern = "\\.xlsx$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+
+  candidates <- candidates[
+    !grepl("reports[/\\\\]output", candidates) &
+      !grepl("(^|[/\\\\])_tmp_", candidates)
+  ]
+
+  if (!length(candidates)) {
+    stop(
+      "No Excel workbook was found. Pass the workbook path with -P export_xlsx=/path/to/file.xlsx.",
+      call. = FALSE
+    )
+  }
+
+  valid_candidates <- keep(candidates, function(candidate) {
+    sheets <- tryCatch(readxl::excel_sheets(candidate), error = function(e) character())
+    all(base_required_sheets %in% sheets)
+  })
+
+  if (!length(valid_candidates)) {
+    stop(
+      "No workbook with the required UVLT export sheets was found. Pass the workbook path explicitly with -P export_xlsx=...",
+      call. = FALSE
+    )
+  }
+
+  info <- file.info(valid_candidates)
+  normalizePath(valid_candidates[order(info$mtime, decreasing = TRUE)[1]], winslash = "/", mustWork = TRUE)
+}
+
+read_sheet <- function(sheet_name, workbook_path, sheet_names) {
+  if (!(sheet_name %in% sheet_names)) {
+    return(tibble())
+  }
+  readxl::read_excel(workbook_path, sheet = sheet_name, guess_max = 10000) %>%
+    drop_note_rows()
+}
+
+export_xlsx <- resolve_export_path(params$export_xlsx)
+sheet_names <- readxl::excel_sheets(export_xlsx)
+missing_sheets <- setdiff(base_required_sheets, sheet_names)
+
+if (length(missing_sheets)) {
+  stop(
+    paste(
+      "The workbook is missing required sheets:",
+      paste(missing_sheets, collapse = ", ")
+    ),
+    call. = FALSE
+  )
+}
+
+has_ljt <- all(ljt_optional_sheets %in% sheet_names)
+
+summary_tbl <- read_sheet("summary", export_xlsx, sheet_names) %>%
+  slice(1) %>%
+  mutate(
+    startedAt = parse_time(startedAt),
+    completedAt = parse_time(completedAt),
+    across(any_of(c(
+      "sessionElapsedMs", "administeredTestlets", "administeredItems",
+      "plannedTestlets", "plannedItems", "targetSE", "quadraturePoints",
+      "selectionThetaStep", "rawCorrect", "theta", "se", "map",
+      "linkedRaschTheta", "linkedRaschSE", "estimatedVocabularySize",
+      "lowerVocabularySize", "upperVocabularySize", "interruptionEvents",
+      "browserBackAttempts", "unloadPrompts", "pageHiddenEvents",
+      "restoreEvents", "linkingSampleSize"
+    )), safe_numeric)
+  )
+
+if (!nrow(summary_tbl)) {
+  stop("The summary sheet is empty.", call. = FALSE)
+}
+
+band_diag_tbl <- read_sheet("band_diagnostics", export_xlsx, sheet_names) %>%
+  mutate(
+    band = factor(tolower(band), levels = band_levels),
+    across(any_of(c(
+      "expectedAccuracy", "lowerAccuracy", "upperAccuracy", "expectedFormScore",
+      "estimatedKnownWords", "lowerKnownWords", "upperKnownWords",
+      "itemCount", "observedCorrect", "observedItems", "observedAccuracy",
+      "meanDifficulty"
+    )), safe_numeric)
+  ) %>%
+  arrange(band)
+
+testlet_log_tbl <- read_sheet("testlet_log", export_xlsx, sheet_names) %>%
+  mutate(
+    order = safe_numeric(order),
+    level = factor(tolower(level), levels = band_levels),
+    across(any_of(c(
+      "selectionTheta", "selectionDifficulty", "selectionRawDifficulty",
+      "informationScore", "posteriorReductionScore", "difficultyGap",
+      "elapsedMs", "correctCount"
+    )), safe_numeric),
+    across(any_of(c("selectedAt", "presentedAt", "submittedAt")), parse_time),
+    accuracyRate = ifelse(is.na(correctCount), NA_real_, correctCount / 3)
+  ) %>%
+  arrange(order)
+
+item_tbl <- read_sheet("item_responses", export_xlsx, sheet_names) %>%
+  mutate(
+    level = factor(tolower(level), levels = band_levels),
+    correct = parse_flag(correct),
+    across(any_of(c(
+      "positionInForm", "testletVariance", "rawDifficulty", "linkedDifficulty",
+      "difficulty", "thetaBefore", "thetaAfter", "seAfter",
+      "thetaAfterLinkedRasch", "seAfterLinkedRasch", "testletElapsedMs"
+    )), safe_numeric),
+    across(any_of(c("testletPresentedAt", "responseSubmittedAt", "timestamp")), parse_time)
+  )
+
+practice_tbl <- read_sheet("practice", export_xlsx, sheet_names) %>%
+  mutate(
+    itemOrder = safe_numeric(itemOrder),
+    correct = parse_flag(correct),
+    elapsedMs = safe_numeric(elapsedMs),
+    across(any_of(c("presentedAt", "submittedAt")), parse_time)
+  )
+
+events_tbl <- read_sheet("session_events", export_xlsx, sheet_names) %>%
+  mutate(
+    order = safe_numeric(order),
+    timestamp = parse_time(timestamp)
+  )
+
+routing_tbl <- read_sheet("routing_summary", export_xlsx, sheet_names) %>%
+  mutate(
+    band = factor(tolower(band), levels = band_levels),
+    across(any_of(c(
+      "administeredTestlets", "administeredItems", "correctItems", "observedAccuracy"
+    )), safe_numeric)
+  ) %>%
+  arrange(band)
+
+linking_tbl <- read_sheet("linking_coeffs", export_xlsx, sheet_names) %>%
+  mutate(
+    band = factor(tolower(band), levels = band_levels),
+    across(any_of(c("slope", "intercept", "correlation", "rmse", "calibrationSampleSize")), safe_numeric)
+  ) %>%
+  arrange(band)
+
+testlet_variance_tbl <- read_sheet("testlet_variance", export_xlsx, sheet_names) %>%
+  mutate(
+    band = factor(tolower(band), levels = band_levels),
+    across(any_of(c("positionInForm", "rawVariance", "linkedVariance", "linkSlope")), safe_numeric)
+  ) %>%
+  arrange(band, positionInForm)
+
+if (has_ljt) {
+  ljt_log_tbl <- read_sheet("ljt_log", export_xlsx, sheet_names) %>%
+    mutate(
+      phase = factor(phase, levels = c("practice", "main")),
+      condition = factor(condition, levels = condition_levels),
+      target_level = case_when(
+        tolower(target_level) %in% band_levels ~ tolower(target_level),
+        TRUE ~ as.character(target_level)
+      ),
+      target_level = factor(target_level, levels = c("practice", band_levels)),
+      response_mode = as.character(response_mode),
+      replay_enabled = parse_flag(replay_enabled),
+      timeout_flag = parse_flag(timeout_flag),
+      is_correct = parse_flag(is_correct),
+      is_practice_extra = parse_flag(is_practice_extra),
+      is_retry_original = parse_flag(is_retry_original),
+      across(any_of(c(
+        "trial_seq", "trial_in_phase", "audio_duration_ms",
+        "first_audio_context_start_time_s", "audio_context_start_time_s",
+        "first_audio_onset_at_ctx_s", "audio_onset_at_ctx_s",
+        "first_audio_offset_at_ctx_s", "audio_offset_at_ctx_s",
+        "last_audio_onset_at_ctx_s", "last_audio_offset_at_ctx_s",
+        "deadline_at_ctx_s", "response_at_ctx_s", "response_value",
+        "rt_from_offset_ms", "rt_from_first_offset_ms", "rt_from_last_offset_ms",
+        "response_from_first_onset_ms", "response_from_last_onset_ms",
+        "premature_click_count", "premature_replay_click_count",
+        "audio_play_count_total", "audio_play_count_completed",
+        "audio_replay_count"
+      )), safe_numeric),
+      across(any_of(c("started_at_iso", "settled_at_iso")), parse_time),
+      valid_trial = if_else(is.na(invalidation_reason) | invalidation_reason == "", TRUE, FALSE),
+      answered_trial = !is.na(response_value)
+    ) %>%
+    arrange(phase, trial_seq)
+
+  ljt_summary_tbl <- read_sheet("ljt_summary", export_xlsx, sheet_names) %>%
+    slice(1) %>%
+    mutate(
+      across(any_of(c(
+        "n_trials_total", "n_trials_app", "n_trials_inapp", "n_correct_total",
+        "n_correct_app", "n_correct_inapp", "n_hit_app", "n_fa_inapp",
+        "n_timeout_app", "n_timeout_inapp", "H", "F", "d_primary",
+        "c_primary", "d_excluding_timeouts", "raw_accuracy",
+        "conditional_accuracy", "mean_rt_app_correct", "mean_rt_inapp_correct",
+        "median_rt_app_correct", "median_rt_inapp_correct",
+        "mean_rt_first_offset_all", "median_rt_first_offset_all",
+        "mean_rt_last_offset_all", "median_rt_last_offset_all",
+        "mean_rt_first_offset_correct", "median_rt_first_offset_correct",
+        "mean_rt_last_offset_correct", "median_rt_last_offset_correct",
+        "mean_audio_play_count_total", "median_audio_play_count_total",
+        "mean_audio_replay_count", "median_audio_replay_count",
+        "max_audio_replay_count", "practice_raw_accuracy", "practice_n_trials"
+      )), safe_numeric)
+    )
+
+  ljt_meta_tbl <- read_sheet("ljt_session_meta", export_xlsx, sheet_names) %>%
+    slice(1) %>%
+    mutate(
+      replay_enabled = parse_flag(replay_enabled),
+      bluetooth_warning_shown = parse_flag(bluetooth_warning_shown),
+      practice_extra_triggered = parse_flag(practice_extra_triggered),
+      across(any_of(c(
+        "audio_context_sample_rate", "audio_context_output_latency_ms",
+        "audio_context_base_latency_ms", "headphone_check_attempts",
+        "preload_total_files", "ljt_total_duration_s", "practice_accuracy",
+        "practice_accuracy_original", "theta_pad_theta_hat",
+        "theta_pad_width_used", "theta_pad_candidates_at_05",
+        "theta_pad_candidates_at_10", "theta_pad_candidates_at_15",
+        "theta_pad_needed", "theta_pad_chosen", "invalidated_trials_count",
+        "events_tabswitch_count"
+      )), safe_numeric),
+      across(any_of(c(
+        "preload_started_at", "preload_finished_at",
+        "ljt_intro_entered_at", "ljt_main_started_at", "ljt_main_finished_at"
+      )), parse_time)
+    )
+} else {
+  ljt_log_tbl <- tibble()
+  ljt_summary_tbl <- tibble()
+  ljt_meta_tbl <- tibble()
+}
+
+summary_row <- summary_tbl[1, ]
+
+session_overview_tbl <- tibble(
+  指標 = c(
+    "Session ID", "Participant", "CAT testlets", "CAT items",
+    "Final theta", "Final SE", "Linked Rasch theta",
+    "Estimated vocabulary size", "Visited bands",
+    "Elapsed minutes", "Stop reason"
+  ),
+  値 = c(
+    summary_row$sessionId,
+    glue("{summary_row$studentId} / {summary_row$participantName}"),
+    fmt_int(summary_row$administeredTestlets),
+    fmt_int(summary_row$administeredItems),
+    fmt_num(summary_row$theta),
+    fmt_num(summary_row$se),
+    fmt_num(summary_row$linkedRaschTheta),
+    glue("{fmt_int(summary_row$estimatedVocabularySize)} ({fmt_int(summary_row$lowerVocabularySize)} - {fmt_int(summary_row$upperVocabularySize)})"),
+    ifelse(is.na(summary_row$visitedBands) || summary_row$visitedBands == "", "-", summary_row$visitedBands),
+    fmt_min(summary_row$sessionElapsedMs),
+    ifelse(is.na(summary_row$stopReason) || summary_row$stopReason == "", "-", summary_row$stopReason)
+  )
+)
+
+cat_band_tbl <- band_diag_tbl %>%
+  left_join(
+    routing_tbl %>% select(band, administeredTestlets, administeredItems, correctItems),
+    by = "band"
+  ) %>%
+  mutate(
+    band = toupper(as.character(band)),
+    expectedAccuracyLabel = fmt_pct(expectedAccuracy),
+    observedAccuracyLabel = fmt_pct(observedAccuracy),
+    estimatedKnownWordsLabel = fmt_int(estimatedKnownWords)
+  ) %>%
+  select(
+    band, itemCount, estimatedKnownWordsLabel, expectedAccuracyLabel,
+    observedAccuracyLabel, administeredTestlets, administeredItems, correctItems
+  )
+
+event_summary_tbl <- events_tbl %>%
+  count(type, sort = TRUE, name = "件数")
+
+routing_plot_tbl <- testlet_log_tbl %>%
+  filter(!is.na(order))
+
+band_plot_tbl <- band_diag_tbl %>%
+  select(band, expectedAccuracy, observedAccuracy) %>%
+  pivot_longer(
+    cols = c(expectedAccuracy, observedAccuracy),
+    names_to = "metric",
+    values_to = "accuracy"
+  ) %>%
+  filter(!is.na(accuracy)) %>%
+  mutate(
+    metric = recode(
+      metric,
+      expectedAccuracy = "Expected",
+      observedAccuracy = "Observed"
+    ),
+    band = factor(toupper(as.character(band)), levels = toupper(band_levels))
+  )
+
+item_plot_tbl <- item_tbl %>%
+  filter(!is.na(correct), !is.na(difficulty))
+
+if (has_ljt && nrow(ljt_log_tbl) > 0) {
+  ljt_main_tbl <- ljt_log_tbl %>%
+    filter(phase == "main")
+
+  ljt_main_valid_tbl <- ljt_main_tbl %>%
+    filter(valid_trial)
+
+  ljt_condition_tbl <- ljt_main_tbl %>%
+    group_by(condition) %>%
+    summarise(
+      n_trials = n(),
+      n_valid = sum(valid_trial, na.rm = TRUE),
+      n_correct = sum(is_correct & valid_trial, na.rm = TRUE),
+      invalidated = sum(!valid_trial, na.rm = TRUE),
+      accuracy = mean(if_else(valid_trial, as.numeric(is_correct), NA_real_), na.rm = TRUE),
+      mean_play_count = mean(if_else(valid_trial, audio_play_count_total, NA_real_), na.rm = TRUE),
+      mean_replay_count = mean(if_else(valid_trial, audio_replay_count, NA_real_), na.rm = TRUE),
+      median_rt_first = median(if_else(valid_trial & answered_trial, rt_from_first_offset_ms, NA_real_), na.rm = TRUE),
+      median_rt_last = median(if_else(valid_trial & answered_trial, rt_from_last_offset_ms, NA_real_), na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(condition = fct_recode(condition, Appropriate = "appropriate", Inappropriate = "inappropriate"))
+
+  ljt_level_tbl <- ljt_main_valid_tbl %>%
+    filter(target_level %in% band_levels) %>%
+    group_by(target_level) %>%
+    summarise(
+      n_trials = n(),
+      accuracy = mean(as.numeric(is_correct), na.rm = TRUE),
+      mean_replay_count = mean(audio_replay_count, na.rm = TRUE),
+      median_rt_last = median(rt_from_last_offset_ms, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(target_level = factor(toupper(as.character(target_level)), levels = toupper(band_levels)))
+
+  replay_dist_tbl <- ljt_main_valid_tbl %>%
+    count(audio_replay_count, name = "n_trials") %>%
+    arrange(audio_replay_count)
+
+  rt_long_tbl <- ljt_main_valid_tbl %>%
+    select(trial_seq, condition, rt_from_first_offset_ms, rt_from_last_offset_ms) %>%
+    pivot_longer(
+      cols = c(rt_from_first_offset_ms, rt_from_last_offset_ms),
+      names_to = "basis",
+      values_to = "rt_ms"
+    ) %>%
+    filter(!is.na(rt_ms)) %>%
+    mutate(
+      basis = recode(
+        basis,
+        rt_from_first_offset_ms = "First offset",
+        rt_from_last_offset_ms = "Last offset"
+      ),
+      condition = fct_recode(condition, Appropriate = "appropriate", Inappropriate = "inappropriate")
+    )
+
+  timeline_tbl <- ljt_main_valid_tbl %>%
+    select(trial_seq, condition, audio_replay_count, rt_from_last_offset_ms) %>%
+    filter(!is.na(trial_seq))
+} else {
+  ljt_main_tbl <- tibble()
+  ljt_main_valid_tbl <- tibble()
+  ljt_condition_tbl <- tibble()
+  ljt_level_tbl <- tibble()
+  replay_dist_tbl <- tibble()
+  rt_long_tbl <- tibble()
+  timeline_tbl <- tibble()
+}
+```
+
+# Workbook Overview
+
+このレポートは workbook `r basename(export_xlsx)` を読み込み、CAT の routing・difficulty・帯域別成績に加えて、LJT シートが存在すれば replay 回数と反応時間も記述統計としてまとめます。絶対パスは `r export_xlsx` です。
+
+```{r}
+session_overview_tbl %>%
+  gt() %>%
+  cols_label(
+    指標 = "Metric",
+    値 = "Value"
+  ) %>%
+  tab_header(
+    title = md("**Session Overview**")
+  )
+```
+
+# CAT Descriptives
+
+最終 CAT 推定値は **theta = `r fmt_num(summary_row$theta)`**、**SE = `r fmt_num(summary_row$se)`** です。推定語彙サイズは **`r fmt_int(summary_row$estimatedVocabularySize)` 語**、レンジは **`r fmt_int(summary_row$lowerVocabularySize)` - `r fmt_int(summary_row$upperVocabularySize)` 語** です。
+
+```{r}
+cat_band_tbl %>%
+  gt() %>%
+  cols_label(
+    band = "Band",
+    itemCount = "Items in Bank",
+    estimatedKnownWordsLabel = "Estimated Known Words",
+    expectedAccuracyLabel = "Expected Accuracy",
+    observedAccuracyLabel = "Observed Accuracy",
+    administeredTestlets = "Administered Testlets",
+    administeredItems = "Administered Items",
+    correctItems = "Correct Items"
+  ) %>%
+  tab_header(
+    title = md("**Band-Level Overview**")
+  )
+```
+
+```{r}
+ggplot(band_plot_tbl, aes(band, accuracy, fill = metric)) +
+  geom_col(position = position_dodge(width = 0.72), width = 0.62) +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
+  scale_fill_manual(values = c("Expected" = "#4C78A8", "Observed" = "#F58518")) +
+  labs(
+    title = "Band-Level Accuracy: Expected vs Observed",
+    x = NULL,
+    y = "Accuracy",
+    fill = NULL
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+```{r}
+ggplot(routing_plot_tbl, aes(order)) +
+  geom_line(aes(y = selectionTheta, color = "Theta at selection"), linewidth = 0.8) +
+  geom_point(aes(y = selectionDifficulty, color = "Selected difficulty"), size = 2.1) +
+  scale_color_manual(values = c(
+    "Theta at selection" = "#4C78A8",
+    "Selected difficulty" = "#E45756"
+  )) +
+  labs(
+    title = "CAT Routing Path on the Linked Scale",
+    x = "Testlet order",
+    y = "Logit scale",
+    color = NULL
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+```{r}
+ggplot(item_plot_tbl, aes(difficulty, as.numeric(correct))) +
+  geom_jitter(aes(color = level), width = 0.05, height = 0.06, alpha = 0.7, size = 2) +
+  scale_y_continuous(
+    breaks = c(0, 1),
+    labels = c("Incorrect", "Correct"),
+    limits = c(-0.1, 1.1)
+  ) +
+  labs(
+    title = "Item Difficulty and Correctness",
+    x = "Item difficulty",
+    y = NULL,
+    color = "Band"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+# LJT Descriptives
+
+```{r results='asis'}
+if (!has_ljt || !nrow(ljt_main_tbl)) {
+  cat("> この workbook には `ljt_log / ljt_summary / ljt_session_meta` がないため、LJT セクションは省略されます。")
+}
+```
+
+```{r}
+if (has_ljt && nrow(ljt_summary_tbl)) {
+  ljt_row <- ljt_summary_tbl[1, ]
+
+  tibble(
+    指標 = c(
+      "Response mode", "Replay enabled", "Main trials", "d-prime",
+      "Hit rate", "False-alarm rate", "Raw accuracy",
+      "Mean play count", "Mean replay count",
+      "Median RT from first offset", "Median RT from last offset"
+    ),
+    値 = c(
+      ljt_meta_tbl$response_mode[[1]],
+      ifelse(isTRUE(ljt_meta_tbl$replay_enabled[[1]]), "TRUE", "FALSE"),
+      fmt_int(ljt_row$n_trials_total),
+      fmt_num(ljt_row$d_primary),
+      fmt_pct(ljt_row$H),
+      fmt_pct(ljt_row$F),
+      fmt_pct(ljt_row$raw_accuracy),
+      fmt_num(ljt_row$mean_audio_play_count_total, digits = 2),
+      fmt_num(ljt_row$mean_audio_replay_count, digits = 2),
+      fmt_ms(ljt_row$median_rt_first_offset_all),
+      fmt_ms(ljt_row$median_rt_last_offset_all)
+    )
+  ) %>%
+    gt() %>%
+    cols_label(
+      指標 = "Metric",
+      値 = "Value"
+    ) %>%
+    tab_header(
+      title = md("**LJT Overview**")
+    )
+}
+```
+
+```{r}
+if (has_ljt && nrow(ljt_condition_tbl)) {
+  ljt_condition_tbl %>%
+    mutate(
+      accuracy = fmt_pct(accuracy),
+      mean_play_count = fmt_num(mean_play_count, digits = 2),
+      mean_replay_count = fmt_num(mean_replay_count, digits = 2),
+      median_rt_first = fmt_ms(median_rt_first),
+      median_rt_last = fmt_ms(median_rt_last)
+    ) %>%
+    gt() %>%
+    cols_label(
+      condition = "Condition",
+      n_trials = "Trials",
+      n_valid = "Valid",
+      n_correct = "Correct",
+      invalidated = "Invalidated",
+      accuracy = "Accuracy",
+      mean_play_count = "Mean Play Count",
+      mean_replay_count = "Mean Replay Count",
+      median_rt_first = "Median RT (First Offset)",
+      median_rt_last = "Median RT (Last Offset)"
+    ) %>%
+    tab_header(
+      title = md("**LJT by Condition**")
+    )
+}
+```
+
+```{r}
+if (has_ljt && nrow(replay_dist_tbl)) {
+  ggplot(replay_dist_tbl, aes(audio_replay_count, n_trials)) +
+    geom_col(fill = "#54A24B", width = 0.7) +
+    scale_x_continuous(breaks = sort(unique(replay_dist_tbl$audio_replay_count))) +
+    labs(
+      title = "Replay Count Distribution (Main LJT)",
+      x = "Replay count",
+      y = "Number of trials"
+    ) +
+    theme_minimal(base_size = 12)
+}
+```
+
+```{r}
+if (has_ljt && nrow(rt_long_tbl)) {
+  ggplot(rt_long_tbl, aes(condition, rt_ms, fill = basis)) +
+    geom_boxplot(outlier.alpha = 0.2, width = 0.65, position = position_dodge(width = 0.7)) +
+    scale_y_continuous(labels = comma_format()) +
+    scale_fill_manual(values = c("First offset" = "#4C78A8", "Last offset" = "#E45756")) +
+    labs(
+      title = "LJT Reaction Time by Condition and Reference Point",
+      x = NULL,
+      y = "RT (ms)",
+      fill = NULL
+    ) +
+    theme_minimal(base_size = 12)
+}
+```
+
+```{r}
+if (has_ljt && nrow(timeline_tbl)) {
+  timeline_long_tbl <- timeline_tbl %>%
+    mutate(condition = fct_recode(condition, Appropriate = "appropriate", Inappropriate = "inappropriate")) %>%
+    pivot_longer(
+      cols = c(audio_replay_count, rt_from_last_offset_ms),
+      names_to = "metric",
+      values_to = "value"
+    ) %>%
+    mutate(
+      metric = recode(
+        metric,
+        audio_replay_count = "Replay count",
+        rt_from_last_offset_ms = "RT from last offset (ms)"
+      )
+    )
+
+  ggplot(timeline_long_tbl, aes(trial_seq, value, color = condition)) +
+    geom_line(alpha = 0.7) +
+    geom_point(size = 1.8) +
+    facet_wrap(~ metric, scales = "free_y", ncol = 1) +
+    labs(
+      title = "Trial-by-Trial LJT Behavior",
+      x = "Main-trial order",
+      y = NULL,
+      color = "Condition"
+    ) +
+    theme_minimal(base_size = 12)
+}
+```
+
+```{r}
+if (has_ljt && nrow(ljt_level_tbl)) {
+  ljt_level_tbl %>%
+    mutate(
+      accuracy = fmt_pct(accuracy),
+      mean_replay_count = fmt_num(mean_replay_count, digits = 2),
+      median_rt_last = fmt_ms(median_rt_last)
+    ) %>%
+    gt() %>%
+    cols_label(
+      target_level = "Target Level",
+      n_trials = "Trials",
+      accuracy = "Accuracy",
+      mean_replay_count = "Mean Replay Count",
+      median_rt_last = "Median RT (Last Offset)"
+    ) %>%
+    tab_header(
+      title = md("**LJT by Target Level**")
+    )
+}
+```
+
+# Session Quality
+
+CAT 側では中断イベントが **`r fmt_int(summary_row$interruptionEvents)` 件**、ブラウザ戻り操作が **`r fmt_int(summary_row$browserBackAttempts)` 回**、復帰イベントが **`r fmt_int(summary_row$restoreEvents)` 回** 記録されています。
+
+```{r}
+if (nrow(event_summary_tbl)) {
+  event_summary_tbl %>%
+    gt() %>%
+    cols_label(
+      type = "Event Type",
+      件数 = "Count"
+    ) %>%
+    tab_header(
+      title = md("**Session Events**")
+    )
+}
+```
+
+```{r}
+if (nrow(event_summary_tbl)) {
+  ggplot(event_summary_tbl, aes(fct_reorder(type, 件数), 件数)) +
+    geom_col(fill = "#B279A2") +
+    coord_flip() +
+    labs(
+      title = "Session Event Frequency",
+      x = NULL,
+      y = "Count"
+    ) +
+    theme_minimal(base_size = 12)
+}
+```
+
+```{r}
+if (has_ljt && nrow(ljt_meta_tbl)) {
+  tibble(
+    指標 = c(
+      "Headphone check attempts",
+      "Headphone result",
+      "Connection estimate",
+      "Output latency (ms)",
+      "Bluetooth warning shown",
+      "LJT duration (s)",
+      "Invalidated LJT trials",
+      "Practice extra triggered"
+    ),
+    値 = c(
+      fmt_int(ljt_meta_tbl$headphone_check_attempts[[1]]),
+      ljt_meta_tbl$headphone_check_result[[1]],
+      ljt_meta_tbl$connection_type_estimate[[1]],
+      fmt_num(ljt_meta_tbl$audio_context_output_latency_ms[[1]], digits = 1),
+      ifelse(isTRUE(ljt_meta_tbl$bluetooth_warning_shown[[1]]), "TRUE", "FALSE"),
+      fmt_num(ljt_meta_tbl$ljt_total_duration_s[[1]], digits = 1),
+      fmt_int(ljt_meta_tbl$invalidated_trials_count[[1]]),
+      ifelse(isTRUE(ljt_meta_tbl$practice_extra_triggered[[1]]), "TRUE", "FALSE")
+    )
+  ) %>%
+    gt() %>%
+    cols_label(
+      指標 = "Metric",
+      値 = "Value"
+    ) %>%
+    tab_header(
+      title = md("**LJT Session Meta**")
+    )
+}
+```
+
+# Render
+
+このドキュメントは次のように render できます。
+
+```bash
+quarto render Analysis/uvlt_export_descriptives.qmd \
+  -P export_xlsx=/absolute/path/to/export_workbook.xlsx
+```

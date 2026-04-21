@@ -1,0 +1,1352 @@
+[
+  {
+    "word": "note",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword ノート means notebook in JP; false friend risk."
+  },
+  {
+    "word": "grass",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "Basic vocabulary 草; may be confused with glass."
+  },
+  {
+    "word": "laugh",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "Common early vocabulary 笑う; pronunciation difficulty."
+  },
+  {
+    "word": "reply",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "Common verb 返事/返信; straightforward."
+  },
+  {
+    "word": "bring",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Deictic 持ってくる vs 連れてくる distinction in JP."
+  },
+  {
+    "word": "definite",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "確定的/明確な; spelling and pronunciation challenging."
+  },
+  {
+    "word": "awful",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Sense shift historical; JP学習者 often confuse intensifier use."
+  },
+  {
+    "word": "coach",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword コーチ salient; bus/carriage senses unknown in JP."
+  },
+  {
+    "word": "section",
+    "concreteness": "abstract",
+    "polysemy": "high_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword セクション; multiple JP equivalents (部/節/区画)."
+  },
+  {
+    "word": "site",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword サイト dominantly means website in JP."
+  },
+  {
+    "word": "sheet",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword シート includes seat; bedsheet/paper senses overlap."
+  },
+  {
+    "word": "cap",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword キャップ; hat and bottle-cap senses distinct."
+  },
+  {
+    "word": "contribute",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "貢献する/寄付する; common academic vocabulary."
+  },
+  {
+    "word": "bump",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Onomatopoeic; multiple senses (collide/lump/encounter)."
+  },
+  {
+    "word": "include",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "含む; high-frequency functional vocabulary."
+  },
+  {
+    "word": "proud",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "誇りに思う; positive vs negative connotation differs culturally."
+  },
+  {
+    "word": "constant",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "一定の/絶え間ない; math loanword コンスタント also known."
+  },
+  {
+    "word": "apology",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "謝罪; culturally important in Japan (apology culture)."
+  },
+  {
+    "word": "counsel",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Often confused with council; カウンセル loanword ambiguous."
+  },
+  {
+    "word": "poverty",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "貧困; academic/social topic vocabulary."
+  },
+  {
+    "word": "heritage",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "遺産/文化遺産; UNESCO context familiar in JP."
+  },
+  {
+    "word": "asset",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "資産; business loanword アセット increasingly common."
+  },
+  {
+    "word": "consent",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "同意/承諾; legal/medical register."
+  },
+  {
+    "word": "specify",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "指定する; technical/academic register."
+  },
+  {
+    "word": "exhibit",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "展示する/示す; museum vs demonstrate senses."
+  },
+  {
+    "word": "capture",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword キャプチャ (screenshot) dominant in JP tech use."
+  },
+  {
+    "word": "debate",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "Loanword ディベート; Western rhetorical tradition."
+  },
+  {
+    "word": "exceed",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "超える; often confused with accede/succeed."
+  },
+  {
+    "word": "absorb",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "吸収する; physical and metaphorical senses."
+  },
+  {
+    "word": "approximate",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "おおよその; verb/adjective form confusion common."
+  },
+  {
+    "word": "frequent",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "頻繁な; common academic register."
+  },
+  {
+    "word": "former",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "前の/以前の; former/latter pair taught together."
+  },
+  {
+    "word": "cave",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "洞窟; straightforward concrete noun."
+  },
+  {
+    "word": "scenario",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "Loanword シナリオ universally known in JP."
+  },
+  {
+    "word": "soap",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "石鹸; loanword ソープ has pejorative connotation risk."
+  },
+  {
+    "word": "tutor",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "家庭教師; juku/cram-school culture salient in JP."
+  },
+  {
+    "word": "diamond",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword ダイヤモンド; also baseball infield sense."
+  },
+  {
+    "word": "orchestra",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "Loanword オーケストラ; Western classical music tradition."
+  },
+  {
+    "word": "slot",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword スロット associated with gambling machines."
+  },
+  {
+    "word": "scrap",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword スクラップ means newspaper clipping/junk in JP."
+  },
+  {
+    "word": "venue",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "会場; loanword ベニュー rare."
+  },
+  {
+    "word": "shrink",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "縮む; irregular verb conjugation challenging."
+  },
+  {
+    "word": "fling",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "投げる; low-frequency, irregular verb."
+  },
+  {
+    "word": "weep",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "泣く; literary register, less common than cry."
+  },
+  {
+    "word": "activate",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "起動する; tech loanword アクティベート increasing."
+  },
+  {
+    "word": "explode",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "爆発する; straightforward physical verb."
+  },
+  {
+    "word": "swift",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "素早い; literary; may associate with Taylor Swift."
+  },
+  {
+    "word": "greasy",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "脂っこい; food context; adjective derivation tricky."
+  },
+  {
+    "word": "mustache",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "口ひげ; spelling variant moustache confusing."
+  },
+  {
+    "word": "paradise",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "Loanword パラダイス; Christian/Western religious origin."
+  },
+  {
+    "word": "pastry",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "no_direct",
+    "notes": "Western baked goods; no single JP equivalent, often ペストリー."
+  },
+  {
+    "word": "vase",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "花瓶; pronunciation varies (vayz/vahz)."
+  },
+  {
+    "word": "chord",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword コード overlaps with cord/code; music theory."
+  },
+  {
+    "word": "rectangle",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "長方形; geometry vocabulary."
+  },
+  {
+    "word": "hum",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "鼻歌; onomatopoeic; less common as noun."
+  },
+  {
+    "word": "pork",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "豚肉; common food vocabulary, culturally significant in JP."
+  },
+  {
+    "word": "perfume",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "香水; loanword パフューム; also JP pop group name."
+  },
+  {
+    "word": "wizard",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "魔法使い; Harry Potter/fantasy culturally Western."
+  },
+  {
+    "word": "sanctuary",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "no_direct",
+    "notes": "聖域/保護区; Christian origin; multiple nuances."
+  },
+  {
+    "word": "altitude",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "高度; scientific/aviation register."
+  },
+  {
+    "word": "robe",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "Loanword ローブ; Western garment; bathrobe sense common."
+  },
+  {
+    "word": "pirate",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "海賊; also software piracy sense; One Piece familiar."
+  },
+  {
+    "word": "notify",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "通知する; tech/formal register."
+  },
+  {
+    "word": "erase",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "消す; related to loanword 消しゴム (eraser)."
+  },
+  {
+    "word": "swap",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "交換する; loanword スワップ in finance/tech."
+  },
+  {
+    "word": "bald",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "はげた; often confused with bold."
+  },
+  {
+    "word": "mandatory",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "必須の/義務的な; formal/legal register."
+  },
+  {
+    "word": "price",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "値段/価格; fundamental economic vocabulary, early JP."
+  },
+  {
+    "word": "photograph",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "写真; basic JH vocabulary."
+  },
+  {
+    "word": "garden",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "庭; basic vocabulary but loanword ガーデン distinct."
+  },
+  {
+    "word": "eye",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "目; body part taught early; multiple metaphorical extensions."
+  },
+  {
+    "word": "father",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "父/お父さん/パパ; family vocabulary, JP has register-sensitive forms."
+  },
+  {
+    "word": "night",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "夜; basic time vocabulary taught early."
+  },
+  {
+    "word": "uncle",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "おじ; JP distinguishes 伯父 (older) / 叔父 (younger) but English uncle maps to both."
+  },
+  {
+    "word": "center",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "センター/中央/真ん中; multiple senses (middle, institution, sports position)."
+  },
+  {
+    "word": "brother",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "兄/弟 distinction in JP not collapsed as in English."
+  },
+  {
+    "word": "hour",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "時間; basic time vocabulary."
+  },
+  {
+    "word": "plan",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "計画/プラン; common in daily and business use."
+  },
+  {
+    "word": "bath",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "風呂; culturally important in Japan but also bathroom (米: bath = room)."
+  },
+  {
+    "word": "shoulder",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "肩; body part vocabulary, early JP."
+  },
+  {
+    "word": "prepare",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "準備する; basic verb taught JH."
+  },
+  {
+    "word": "forget",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "忘れる; basic verb taught JH."
+  },
+  {
+    "word": "work",
+    "concreteness": "abstract",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "働く/仕事/機能する; very polysemous (labor, function, artwork)."
+  },
+  {
+    "word": "return",
+    "concreteness": "abstract",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "戻る/返す/リターン; polysemous (go back, give back, profit)."
+  },
+  {
+    "word": "check",
+    "concreteness": "abstract",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "確認/チェック; multiple senses (verify, tick, bank check, pattern)."
+  },
+  {
+    "word": "stare",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "見つめる; distinct from look/see; taught senior high."
+  },
+  {
+    "word": "main",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "主な/メイン; common adjective."
+  },
+  {
+    "word": "bad",
+    "concreteness": "abstract",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "悪い; basic evaluative adjective."
+  },
+  {
+    "word": "cold",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "寒い (weather)/冷たい (object); JP distinguishes two cold senses."
+  },
+  {
+    "word": "general",
+    "concreteness": "abstract",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "一般的な; also military rank noun; multiple senses."
+  },
+  {
+    "word": "feature",
+    "concreteness": "abstract",
+    "polysemy": "high_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "特徴; product feature, facial feature, film feature."
+  },
+  {
+    "word": "weed",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "雑草; also slang for marijuana (different register)."
+  },
+  {
+    "word": "vegetable",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "野菜; food vocabulary, early JP."
+  },
+  {
+    "word": "knowledge",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "知識; academic vocabulary; spelling/pronunciation tricky."
+  },
+  {
+    "word": "average",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "平均; math/statistics vocabulary."
+  },
+  {
+    "word": "circle",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "円/サークル/仲間; loanword サークル means club in JP."
+  },
+  {
+    "word": "knife",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "ナイフ/包丁; JP distinguishes Western vs Japanese knives."
+  },
+  {
+    "word": "justice",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "正義; legal/moral concept, somewhat Western-tilted."
+  },
+  {
+    "word": "envelope",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "封筒; common concrete noun, JH level."
+  },
+  {
+    "word": "apartment",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "アパート/マンション; JP semantic split (アパート=older/cheaper, マンション=newer/nicer)."
+  },
+  {
+    "word": "wrap",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "包む/ラップ; loanword for plastic wrap confusingly similar."
+  },
+  {
+    "word": "seek",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "探す/求める; formal register for search/look for."
+  },
+  {
+    "word": "contain",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "含む; academic/general use."
+  },
+  {
+    "word": "search",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "検索する/探す; common in IT/internet contexts."
+  },
+  {
+    "word": "avoid",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "避ける; common verb, JP senior high."
+  },
+  {
+    "word": "receive",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "受け取る; vs give/send pairing; spelling difficult (i before e)."
+  },
+  {
+    "word": "super",
+    "concreteness": "abstract",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "スーパー = supermarket in JP; intensifier sense also known."
+  },
+  {
+    "word": "rotten",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "腐った; past participle as adjective tricky."
+  },
+  {
+    "word": "smooth",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "滑らかな; tactile + metaphorical (smooth operation)."
+  },
+  {
+    "word": "junior",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "ジュニア/後輩; cultural concept of seniority differs in JP."
+  },
+  {
+    "word": "behavior",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "行動/振る舞い; multiple JP equivalents."
+  },
+  {
+    "word": "celebration",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "祝い; noun derivation of celebrate."
+  },
+  {
+    "word": "phrase",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "フレーズ; language/music contexts."
+  },
+  {
+    "word": "wealth",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "富; abundance and money senses both exist."
+  },
+  {
+    "word": "agriculture",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "農業; academic/societal topic vocabulary."
+  },
+  {
+    "word": "regime",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "政権/体制; political jargon; loanword レジーム academic."
+  },
+  {
+    "word": "volunteer",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "ボランティア; culturally prominent in JP after 1995 earthquake."
+  },
+  {
+    "word": "intelligence",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "知能 (ability)/情報 (intel); senses distinguished in JP."
+  },
+  {
+    "word": "pit",
+    "concreteness": "concrete",
+    "polysemy": "high_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "穴/ピット; motorsports, fruit, mine, music venue senses."
+  },
+  {
+    "word": "audience",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "観客 (watchers)/聴衆 (listeners); JP splits by modality."
+  },
+  {
+    "word": "proceed",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "進む; formal register; confusable with precede."
+  },
+  {
+    "word": "persist",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "続く/固執する; academic verb."
+  },
+  {
+    "word": "prior",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "前の; formal register; Latin origin."
+  },
+  {
+    "word": "consistent",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "一貫した; academic/logical sense."
+  },
+  {
+    "word": "mutual",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "相互の; formal/business register."
+  },
+  {
+    "word": "vitamin",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "early",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "ビタミン; health/science vocabulary, early JP."
+  },
+  {
+    "word": "crust",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "western",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "パンの耳/外皮; pizza/bread contexts; earth's crust."
+  },
+  {
+    "word": "verdict",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "評決; legal/formal register."
+  },
+  {
+    "word": "embassy",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "大使館; political/international vocabulary."
+  },
+  {
+    "word": "tobacco",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "タバコ/煙草; plant vs cigarette senses often conflated."
+  },
+  {
+    "word": "alley",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "路地; also bowling alley compound."
+  },
+  {
+    "word": "forbid",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "禁じる; irregular verb conjugation."
+  },
+  {
+    "word": "disclose",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "公開する; legal/business register."
+  },
+  {
+    "word": "diminish",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "減少する; formal/academic verb."
+  },
+  {
+    "word": "transplant",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "移植する; medical/botanical context."
+  },
+  {
+    "word": "adjacent",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "隣接した; formal register, spatial."
+  },
+  {
+    "word": "sane",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "正気の; psychological/legal register."
+  },
+  {
+    "word": "credible",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "信頼できる; academic/evaluative register."
+  },
+  {
+    "word": "abnormal",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "異常な; often appears in psychology/medicine contexts."
+  },
+  {
+    "word": "lime",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "mid",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "ライム (citrus); also mineral lime (石灰), but fruit sense tested."
+  },
+  {
+    "word": "intrude",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "侵入する; formal register."
+  },
+  {
+    "word": "shred",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "細断する/千切りにする; paper vs food context."
+  },
+  {
+    "word": "expire",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "期限切れになる; also formal for die (unmarked sense)."
+  },
+  {
+    "word": "meditate",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "瞑想する; spiritual/mindfulness context."
+  },
+  {
+    "word": "ignite",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "火をつける; also metaphorical (ignite passion)."
+  },
+  {
+    "word": "pierce",
+    "concreteness": "concrete",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_many",
+    "notes": "突き刺す; loanword ピアス means earring (false friend)."
+  },
+  {
+    "word": "tranquil",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "静かな/穏やかな; literary register."
+  },
+  {
+    "word": "moist",
+    "concreteness": "concrete",
+    "polysemy": "mono",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "湿った; tactile adjective, food/skin context."
+  },
+  {
+    "word": "tame",
+    "concreteness": "abstract",
+    "polysemy": "low_poly",
+    "cultural_tilt": "universal",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "飼い慣らされた; animal domestication sense."
+  },
+  {
+    "word": "prudent",
+    "concreteness": "abstract",
+    "polysemy": "mono",
+    "cultural_tilt": "business_academic",
+    "school_curriculum_JP": "late",
+    "translation_ambiguity_JP": "one_to_one",
+    "notes": "慎重な/賢明な; formal/financial register."
+  }
+]

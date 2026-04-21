@@ -1,0 +1,626 @@
+---
+title: "UVLT CAT Export Analysis"
+subtitle: "Excel export workbook report"
+lang: ja
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: show
+    df-print: paged
+execute:
+  echo: false
+  warning: false
+  message: false
+params:
+  export_xlsx: ""
+---
+
+```{r}
+required_packages <- c(
+  "readxl", "dplyr", "tidyr", "stringr", "purrr",
+  "gt", "ggplot2", "scales", "glue", "htmltools"
+)
+
+missing_packages <- required_packages[!vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)]
+
+if (length(missing_packages)) {
+  stop(
+    paste(
+      "Missing R packages:",
+      paste(missing_packages, collapse = ", "),
+      "\nInstall them before rendering this report."
+    ),
+    call. = FALSE
+  )
+}
+
+suppressPackageStartupMessages({
+  library(readxl)
+  library(dplyr)
+  library(tidyr)
+  library(stringr)
+  library(purrr)
+  library(gt)
+  library(ggplot2)
+  library(scales)
+  library(glue)
+  library(htmltools)
+})
+
+options(
+  dplyr.summarise.inform = FALSE,
+  scipen = 999
+)
+
+required_sheets <- c(
+  "summary",
+  "band_diagnostics",
+  "testlet_log",
+  "item_responses",
+  "practice",
+  "estimates",
+  "session_events",
+  "routing_summary",
+  "linking_coeffs",
+  "testlet_variance"
+)
+
+band_levels <- c("1k", "2k", "3k", "4k", "5k")
+
+resolve_export_path <- function(path) {
+  if (nzchar(path)) {
+    return(normalizePath(path, winslash = "/", mustWork = TRUE))
+  }
+
+  candidates <- list.files(
+    path = ".",
+    pattern = "\\.xlsx$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+
+  candidates <- candidates[
+    !grepl("reports[/\\\\]output", candidates) &
+      !grepl("(^|[/\\\\])_tmp_", candidates)
+  ]
+
+  if (!length(candidates)) {
+    stop(
+      paste(
+        "No Excel workbook was found.",
+        "Pass the workbook path with -P export_xlsx=/path/to/file.xlsx."
+      ),
+      call. = FALSE
+    )
+  }
+
+  file_info <- file.info(candidates)
+  normalizePath(candidates[order(file_info$mtime, decreasing = TRUE)[1]], winslash = "/", mustWork = TRUE)
+}
+
+parse_time <- function(x) {
+  if (is.null(x)) {
+    return(as.POSIXct(character()))
+  }
+
+  x <- as.character(x)
+  x[x == ""] <- NA_character_
+  as.POSIXct(x, tz = Sys.timezone(), tryFormats = c(
+    "%Y-%m-%dT%H:%M:%OS",
+    "%Y-%m-%d %H:%M:%OS",
+    "%Y/%m/%d %H:%M:%OS"
+  ))
+}
+
+fmt_num <- function(x, digits = 3) {
+  ifelse(is.na(x), "NA", formatC(x, digits = digits, format = "f"))
+}
+
+fmt_pct <- function(x, digits = 1) {
+  ifelse(is.na(x), "NA", percent(x, accuracy = 10^-digits))
+}
+
+fmt_int <- function(x) {
+  ifelse(is.na(x), "NA", comma(round(as.numeric(x))))
+}
+
+fmt_ms_to_min <- function(x) {
+  ifelse(is.na(x), "NA", formatC(as.numeric(x) / 60000, digits = 2, format = "f"))
+}
+
+label_band <- function(x) {
+  paste0(str_to_upper(x), " band")
+}
+
+make_pipe_table <- function(df) {
+  headers <- names(df)
+  divider <- rep("---", length(headers))
+  rows <- apply(df, 1, function(row) paste0("| ", paste(row, collapse = " | "), " |"))
+  paste(
+    paste0("| ", paste(headers, collapse = " | "), " |"),
+    paste0("| ", paste(divider, collapse = " | "), " |"),
+    paste(rows, collapse = "\n"),
+    sep = "\n"
+  )
+}
+
+export_xlsx <- resolve_export_path(params$export_xlsx)
+sheet_names <- readxl::excel_sheets(export_xlsx)
+missing_sheets <- setdiff(required_sheets, sheet_names)
+
+if (length(missing_sheets)) {
+  stop(
+    paste(
+      "The workbook is missing required sheets:",
+      paste(missing_sheets, collapse = ", ")
+    ),
+    call. = FALSE
+  )
+}
+
+read_sheet <- function(sheet_name) {
+  readxl::read_excel(export_xlsx, sheet = sheet_name, guess_max = 10000)
+}
+
+workbook <- setNames(lapply(required_sheets, read_sheet), required_sheets)
+
+summary_tbl <- workbook$summary %>%
+  slice(1) %>%
+  mutate(
+    startedAt = parse_time(startedAt),
+    completedAt = parse_time(completedAt),
+    theta = as.numeric(theta),
+    se = as.numeric(se),
+    map = as.numeric(map),
+    linkedRaschTheta = as.numeric(linkedRaschTheta),
+    linkedRaschSE = as.numeric(linkedRaschSE),
+    sessionElapsedMs = as.numeric(sessionElapsedMs),
+    administeredTestlets = as.numeric(administeredTestlets),
+    administeredItems = as.numeric(administeredItems),
+    rawCorrect = as.numeric(rawCorrect),
+    targetSE = as.numeric(targetSE),
+    estimatedVocabularySize = as.numeric(estimatedVocabularySize),
+    lowerVocabularySize = as.numeric(lowerVocabularySize),
+    upperVocabularySize = as.numeric(upperVocabularySize),
+    interruptionEvents = as.numeric(interruptionEvents),
+    browserBackAttempts = as.numeric(browserBackAttempts),
+    unloadPrompts = as.numeric(unloadPrompts),
+    pageHiddenEvents = as.numeric(pageHiddenEvents),
+    restoreEvents = as.numeric(restoreEvents)
+  )
+
+band_diag_tbl <- workbook$band_diagnostics %>%
+  mutate(
+    band = factor(band, levels = band_levels),
+    expectedAccuracy = as.numeric(expectedAccuracy),
+    lowerAccuracy = as.numeric(lowerAccuracy),
+    upperAccuracy = as.numeric(upperAccuracy),
+    expectedFormScore = as.numeric(expectedFormScore),
+    estimatedKnownWords = as.numeric(estimatedKnownWords),
+    lowerKnownWords = as.numeric(lowerKnownWords),
+    upperKnownWords = as.numeric(upperKnownWords),
+    itemCount = as.numeric(itemCount),
+    observedCorrect = as.numeric(observedCorrect),
+    observedItems = as.numeric(observedItems),
+    observedAccuracy = as.numeric(observedAccuracy),
+    meanDifficulty = as.numeric(meanDifficulty)
+  ) %>%
+  arrange(band)
+
+testlet_log_tbl <- workbook$testlet_log %>%
+  mutate(
+    order = as.numeric(order),
+    level = factor(level, levels = band_levels),
+    selectionTheta = as.numeric(selectionTheta),
+    selectionDifficulty = as.numeric(selectionDifficulty),
+    selectionRawDifficulty = as.numeric(selectionRawDifficulty),
+    informationScore = as.numeric(informationScore),
+    posteriorReductionScore = as.numeric(posteriorReductionScore),
+    difficultyGap = as.numeric(difficultyGap),
+    elapsedMs = as.numeric(elapsedMs),
+    correctCount = as.numeric(correctCount),
+    selectedAt = parse_time(selectedAt),
+    presentedAt = parse_time(presentedAt),
+    submittedAt = parse_time(submittedAt),
+    accuracyRate = ifelse(is.na(correctCount), NA_real_, correctCount / 3)
+  ) %>%
+  arrange(order)
+
+item_tbl <- workbook$item_responses %>%
+  mutate(
+    level = factor(level, levels = band_levels),
+    positionInForm = as.numeric(positionInForm),
+    testletVariance = as.numeric(testletVariance),
+    correct = as.logical(correct),
+    rawDifficulty = as.numeric(rawDifficulty),
+    linkedDifficulty = as.numeric(linkedDifficulty),
+    difficulty = as.numeric(difficulty),
+    thetaBefore = as.numeric(thetaBefore),
+    thetaAfter = as.numeric(thetaAfter),
+    seAfter = as.numeric(seAfter),
+    thetaAfterLinkedRasch = as.numeric(thetaAfterLinkedRasch),
+    seAfterLinkedRasch = as.numeric(seAfterLinkedRasch),
+    testletElapsedMs = as.numeric(testletElapsedMs),
+    testletPresentedAt = parse_time(testletPresentedAt),
+    responseSubmittedAt = parse_time(responseSubmittedAt),
+    timestamp = parse_time(timestamp)
+  )
+
+practice_tbl <- workbook$practice %>%
+  mutate(
+    itemOrder = as.numeric(itemOrder),
+    correct = as.logical(correct),
+    elapsedMs = as.numeric(elapsedMs),
+    presentedAt = parse_time(presentedAt),
+    submittedAt = parse_time(submittedAt)
+  )
+
+estimates_tbl <- workbook$estimates %>%
+  mutate(
+    step = as.numeric(step),
+    theta = as.numeric(theta),
+    se = as.numeric(se),
+    map = as.numeric(map),
+    linkedRaschTheta = as.numeric(linkedRaschTheta),
+    linkedRaschSE = as.numeric(linkedRaschSE),
+    linkedRaschMap = as.numeric(linkedRaschMap),
+    testletAwareTheta = as.numeric(testletAwareTheta),
+    testletAwareSE = as.numeric(testletAwareSE),
+    testletAwareMap = as.numeric(testletAwareMap),
+    timestamp = parse_time(timestamp)
+  ) %>%
+  arrange(step)
+
+events_tbl <- workbook$session_events %>%
+  mutate(
+    order = as.numeric(order),
+    timestamp = parse_time(timestamp)
+  )
+
+routing_tbl <- workbook$routing_summary %>%
+  mutate(
+    band = factor(band, levels = band_levels),
+    administeredTestlets = as.numeric(administeredTestlets),
+    administeredItems = as.numeric(administeredItems),
+    correctItems = as.numeric(correctItems),
+    observedAccuracy = as.numeric(observedAccuracy)
+  ) %>%
+  arrange(band)
+
+linking_tbl <- workbook$linking_coeffs %>%
+  mutate(
+    band = factor(band, levels = band_levels),
+    slope = as.numeric(slope),
+    intercept = as.numeric(intercept),
+    correlation = as.numeric(correlation),
+    rmse = as.numeric(rmse)
+  ) %>%
+  arrange(band)
+
+variance_tbl <- workbook$testlet_variance %>%
+  mutate(
+    band = factor(band, levels = band_levels),
+    positionInForm = as.numeric(positionInForm),
+    rawVariance = as.numeric(rawVariance),
+    linkedVariance = as.numeric(linkedVariance),
+    linkSlope = as.numeric(linkSlope)
+  ) %>%
+  arrange(band, positionInForm)
+
+strongest_band <- band_diag_tbl %>% slice_max(expectedAccuracy, n = 1, with_ties = FALSE)
+weakest_band <- band_diag_tbl %>% slice_min(expectedAccuracy, n = 1, with_ties = FALSE)
+
+summary_row <- summary_tbl[1, ]
+
+session_metrics_gt <- tibble::tibble(
+  指標 = c("実施セット数", "実施項目数", "最終 theta", "最終 SE", "推定語彙サイズ", "推定レンジ", "結果の安定性", "終了理由"),
+  値 = c(
+    fmt_int(summary_row$administeredTestlets),
+    fmt_int(summary_row$administeredItems),
+    fmt_num(summary_row$theta),
+    fmt_num(summary_row$se),
+    fmt_int(summary_row$estimatedVocabularySize),
+    glue("{fmt_int(summary_row$lowerVocabularySize)} - {fmt_int(summary_row$upperVocabularySize)}"),
+    summary_row$scoreQuality,
+    ifelse(is.na(summary_row$stopReason) || summary_row$stopReason == "", "-", summary_row$stopReason)
+  )
+)
+
+event_summary_gt <- events_tbl %>%
+  count(type, name = "件数", sort = TRUE) %>%
+  mutate(割合 = 件数 / sum(件数))
+
+testlet_overview_gt <- testlet_log_tbl %>%
+  transmute(
+    順序 = order,
+    帯域 = str_to_upper(as.character(level)),
+    Testlet = testletId,
+    `選択時 theta` = selectionTheta,
+    `選択 difficulty` = selectionDifficulty,
+    `正答数` = correctCount,
+    `所要時間(分)` = elapsedMs / 60000
+  )
+
+band_diag_gt <- band_diag_tbl %>%
+  transmute(
+    帯域 = str_to_upper(as.character(band)),
+    `期待正答率` = expectedAccuracy,
+    `観測正答率` = observedAccuracy,
+    `推定語彙数` = estimatedKnownWords,
+    `推定レンジ下限` = lowerKnownWords,
+    `推定レンジ上限` = upperKnownWords,
+    `平均 difficulty` = meanDifficulty,
+    状態 = statusLabel
+  )
+
+estimates_long <- estimates_tbl %>%
+  select(step, testletAwareTheta, linkedRaschTheta, testletAwareSE) %>%
+  rename(`Testlet-aware theta` = testletAwareTheta, `Linked Rasch theta` = linkedRaschTheta) %>%
+  pivot_longer(
+    cols = c(`Testlet-aware theta`, `Linked Rasch theta`),
+    names_to = "series",
+    values_to = "theta"
+  )
+
+item_accuracy_by_band <- item_tbl %>%
+  group_by(level) %>%
+  summarise(
+    observed_accuracy = mean(correct, na.rm = TRUE),
+    n_items = n()
+  ) %>%
+  mutate(level = factor(level, levels = band_levels))
+
+routing_plot_tbl <- testlet_log_tbl %>%
+  mutate(level_label = str_to_upper(as.character(level)))
+
+sheet_overview_tbl <- tibble::tibble(
+  Sheet = required_sheets,
+  役割 = c(
+    "受験全体の要約指標",
+    "帯域別の診断推定",
+    "testlet 単位の選択ログ",
+    "項目単位の解答ログ",
+    "練習セクションの解答",
+    "逐次推定値の履歴",
+    "イベントログ",
+    "帯域別の実施サマリー",
+    "cross-band linking 係数",
+    "testlet 分散パラメータ"
+  ),
+  主な使い道 = c(
+    "冒頭の解釈文",
+    "帯域比較",
+    "ルーティング確認",
+    "難易度と正答の確認",
+    "練習完了チェック",
+    "theta 推移図",
+    "中断・復帰の確認",
+    "訪問帯域の偏り確認",
+    "尺度連結の注記",
+    "testlet 依存性の参考"
+  )
+)
+```
+
+# Workbook Overview
+
+このレポートは `summary`、`band_diagnostics`、`testlet_log`、`item_responses`、`estimates` を中心に、1件の受験セッションを読んで解釈するための Quarto テンプレートです。入力 workbook は `r basename(export_xlsx)` で、絶対パスは `r export_xlsx` です。
+
+```{r, results='asis'}
+cat(make_pipe_table(sheet_overview_tbl))
+```
+
+# Executive Summary
+
+この受験では **`r fmt_int(summary_row$administeredTestlets)` セット**、**`r fmt_int(summary_row$administeredItems)` 問** を実施しました。最終推定値は **theta = `r fmt_num(summary_row$theta)`**、**SE = `r fmt_num(summary_row$se)`** で、推定語彙サイズは **`r fmt_int(summary_row$estimatedVocabularySize)` 語**、推定レンジは **`r fmt_int(summary_row$lowerVocabularySize)` - `r fmt_int(summary_row$upperVocabularySize)` 語** です。
+
+結果の安定性は **`r summary_row$scoreQuality`** で、解釈メモは「`r summary_row$scoreQualityNote`」です。終了理由は **`r ifelse(is.na(summary_row$stopReason) || summary_row$stopReason == "", "記録なし", summary_row$stopReason)`**、実施時間は **`r fmt_ms_to_min(summary_row$sessionElapsedMs)` 分** でした。
+
+帯域別には、もっとも理解が見込まれるのが **`r label_band(as.character(strongest_band$band))`**（期待正答率 `r fmt_pct(strongest_band$expectedAccuracy)`）、重点補強候補が **`r label_band(as.character(weakest_band$band))`**（期待正答率 `r fmt_pct(weakest_band$expectedAccuracy)`）です。
+
+`r if (summary_row$interruptionEvents > 0) glue("途中で {fmt_int(summary_row$interruptionEvents)} 件の中断イベントが記録されているため、所要時間や安定性はその影響を受けている可能性があります。") else "中断イベントは記録されておらず、受験ログは比較的きれいです。"`
+
+```{r}
+session_metrics_gt %>%
+  gt() %>%
+  cols_label(
+    指標 = "Metric",
+    値 = "Value"
+  ) %>%
+  tab_header(
+    title = md("**Session Snapshot**"),
+    subtitle = md("summary シートから作成")
+  )
+```
+
+# Score Trajectory
+
+推定の更新は **`r nrow(estimates_tbl) - 1` 回** 記録されています。初期値は theta = `r fmt_num(estimates_tbl$theta[1])`、最終値は theta = `r fmt_num(dplyr::last(estimates_tbl$theta))` で、逐次更新の終盤では SE が **`r fmt_num(dplyr::last(estimates_tbl$se))`** まで下がっています。
+
+```{r}
+ggplot(estimates_long, aes(step, theta, color = series)) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2) +
+  geom_ribbon(
+    data = estimates_tbl,
+    aes(x = step, ymin = testletAwareTheta - testletAwareSE, ymax = testletAwareTheta + testletAwareSE),
+    inherit.aes = FALSE,
+    alpha = 0.15,
+    fill = "#2C7FB8"
+  ) +
+  scale_color_manual(values = c("Testlet-aware theta" = "#1B4965", "Linked Rasch theta" = "#CA6702")) +
+  labs(
+    title = "Theta trajectory across administered testlets",
+    x = "Step",
+    y = "Theta",
+    color = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "top")
+```
+
+```{r}
+testlet_overview_gt %>%
+  gt() %>%
+  fmt_number(columns = c(`選択時 theta`, `選択 difficulty`, `所要時間(分)`), decimals = 3) %>%
+  fmt_number(columns = `正答数`, decimals = 0) %>%
+  tab_header(
+    title = md("**Testlet Log**"),
+    subtitle = md("testlet 単位のルーティング記録")
+  )
+```
+
+# Band Diagnostics
+
+帯域別期待正答率は **`r label_band(as.character(strongest_band$band))`** が最も高く、**`r label_band(as.character(weakest_band$band))`** が最も低い状態です。`routing_summary` の観測値と `band_diagnostics` の期待値を並べると、`r if (all(is.na(band_diag_tbl$observedAccuracy))) "今回の workbook では観測正答率が入っていないため、モデルベースの期待値を中心に読むのが妥当です。" else "期待値と観測値のズレから、帯域ごとの過大評価・過小評価の傾向も確認できます。"`
+
+```{r}
+ggplot(band_diag_tbl, aes(band, expectedAccuracy, fill = band)) +
+  geom_col(width = 0.72, show.legend = FALSE) +
+  geom_errorbar(aes(ymin = lowerAccuracy, ymax = upperAccuracy), width = 0.15, linewidth = 0.7) +
+  geom_point(aes(y = observedAccuracy), color = "#7A1F1F", size = 2.6, na.rm = TRUE) +
+  scale_y_continuous(labels = percent_format(accuracy = 1), limits = c(0, 1)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  labs(
+    title = "Expected and observed accuracy by band",
+    subtitle = "Bar = expected accuracy, point = observed accuracy, whisker = lower-upper range",
+    x = NULL,
+    y = "Accuracy"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+```{r}
+band_diag_gt %>%
+  gt() %>%
+  fmt_percent(columns = c(`期待正答率`, `観測正答率`), decimals = 1) %>%
+  fmt_number(
+    columns = c(`推定語彙数`, `推定レンジ下限`, `推定レンジ上限`, `平均 difficulty`),
+    decimals = 0
+  ) %>%
+  tab_header(
+    title = md("**Band Diagnostics**"),
+    subtitle = md("band_diagnostics シートから集計")
+  )
+```
+
+# Item And Routing Patterns
+
+ルーティングでは **`r summary_row$visitedBands`** を訪問しています。testlet 選択時 theta と選択 difficulty の距離は平均で **`r fmt_num(mean(testlet_log_tbl$difficultyGap, na.rm = TRUE))`** 程度で、`r if (mean(testlet_log_tbl$difficultyGap, na.rm = TRUE) <= 0.5) "比較的近い difficulty の testlet が継続して選ばれています。" else "やや広めの difficulty 幅をまたいで testlet が選ばれています。"`
+
+```{r}
+ggplot(routing_plot_tbl, aes(order, selectionDifficulty, color = level_label)) +
+  geom_line(aes(y = selectionTheta, group = 1), color = "#444444", linewidth = 0.8, linetype = "22") +
+  geom_point(aes(size = correctCount), alpha = 0.9) +
+  scale_size_continuous(range = c(2.5, 6), breaks = c(0, 1, 2, 3)) +
+  labs(
+    title = "Routing trace",
+    subtitle = "Points = selected testlet difficulty, dashed line = current theta",
+    x = "Order",
+    y = "Difficulty / Theta",
+    color = "Band",
+    size = "Correct"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "right")
+```
+
+```{r}
+ggplot(item_tbl, aes(linkedDifficulty, as.numeric(correct), color = level)) +
+  geom_jitter(width = 0.05, height = 0.04, alpha = 0.7, size = 2) +
+  stat_summary_bin(
+    fun = mean,
+    bins = 10,
+    geom = "line",
+    linewidth = 1,
+    aes(group = level)
+  ) +
+  scale_y_continuous(labels = percent_format(accuracy = 1), breaks = c(0, 0.5, 1)) +
+  labs(
+    title = "Observed correctness against linked difficulty",
+    x = "Linked difficulty",
+    y = "Correct response"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+```{r}
+routing_tbl %>%
+  transmute(
+    帯域 = str_to_upper(as.character(band)),
+    `実施セット数` = administeredTestlets,
+    `実施項目数` = administeredItems,
+    `正答数` = correctItems,
+    `観測正答率` = observedAccuracy
+  ) %>%
+  gt() %>%
+  fmt_percent(columns = `観測正答率`, decimals = 1) %>%
+  tab_header(
+    title = md("**Routing Summary**"),
+    subtitle = md("routing_summary シートから作成")
+  )
+```
+
+# Event And Quality Review
+
+イベントログでは **`r nrow(events_tbl)` 件** の記録があり、もっとも多いイベントは **`r if (nrow(event_summary_gt)) event_summary_gt$type[[1]] else "記録なし"`** です。ブラウザ戻り操作は **`r fmt_int(summary_row$browserBackAttempts)` 回**、復帰イベントは **`r fmt_int(summary_row$restoreEvents)` 回** でした。
+
+```{r}
+ggplot(event_summary_gt, aes(reorder(type, 件数), 件数)) +
+  geom_col(fill = "#5C7C89") +
+  coord_flip() +
+  labs(
+    title = "Session events",
+    x = NULL,
+    y = "Count"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+```{r}
+event_summary_gt %>%
+  gt() %>%
+  fmt_percent(columns = 割合, decimals = 1) %>%
+  tab_header(
+    title = md("**Event Summary**"),
+    subtitle = md("session_events シートの頻度集計")
+  )
+```
+
+# Linking Notes
+
+この workbook は **`r summary_row$linkingVersion`** を使って band 間を連結しています。`linking_coeffs` の相関は `r fmt_num(min(linking_tbl$correlation, na.rm = TRUE), digits = 3)` から `r fmt_num(max(linking_tbl$correlation, na.rm = TRUE), digits = 3)` の範囲で、連結の安定性はおおむね高いと言えます。
+
+```{r}
+ggplot(linking_tbl, aes(band, slope, group = 1)) +
+  geom_line(color = "#5F0F40", linewidth = 0.9) +
+  geom_point(color = "#5F0F40", size = 2.5) +
+  geom_line(aes(y = correlation), color = "#0F4C5C", linewidth = 0.9, linetype = "22") +
+  geom_point(aes(y = correlation), color = "#0F4C5C", size = 2.5) +
+  labs(
+    title = "Linking diagnostics",
+    subtitle = "Solid = slope, dashed = correlation",
+    x = NULL,
+    y = "Value"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+```{r}
+linking_tbl %>%
+  transmute(
+    帯域 = str_to_upper(as.character(band)),
+    slope = slope,
+    intercept = intercept,
+    correlation = correlation,
+    rmse = rmse
+  ) %>%
+  gt() %>%
+  fmt_number(columns = c(slope, intercept, correlation, rmse), decimals = 3) %>%
+  tab_header(
+    title = md("**Linking Coefficients**"),
+    subtitle = md("linking_coeffs シートから作成")
+  )
+```

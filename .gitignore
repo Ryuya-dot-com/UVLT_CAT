@@ -1,0 +1,22 @@
+.DS_Store
+.claude/
+
+# Local or generated app artifacts
+App_CAT/simulation_output/
+
+# Analysis outputs and sensitive/local data
+Analysis/Japanese_University_Students/
+Analysis/JP_Anchoring/data/
+Analysis/JP_Anchoring/results/
+Analysis/JP_Anchoring/report/*.html
+Analysis/JP_Anchoring/Rplots.pdf
+Analysis/uvlt_export_descriptives_files/
+
+# Reference PDFs and bundled study materials not for public redistribution
+Readings/
+
+# Binary analysis artifacts
+*.RData
+*.rds
+__pycache__/
+*.pyc
