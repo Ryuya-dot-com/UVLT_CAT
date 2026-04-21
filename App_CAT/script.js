@@ -642,6 +642,7 @@
   const state = {
     phase: "intro",
     session: null,
+    pendingResume: null,
     practiceIndex: 0,
     historyGuardArmed: false,
     historyGuardSuspended: false,
@@ -917,6 +918,10 @@
       : "画面が復元されました。保存済みの状態から続行します。";
   }
 
+  function getPendingResumeStatusMessage() {
+    return "この端末に前回の一時保存があります。同じ受験者が同じ学籍番号と受験者名を入力して開始すると続きから再開します。別の受験者が開始すると前回の一時保存は削除されます。";
+  }
+
   function normalizeParticipant(participant) {
     const source = participant || {};
 
@@ -940,6 +945,19 @@
     elements.studentIdInput.value = normalized.studentId;
     elements.participantNameInput.value = normalized.participantName;
     elements.affiliationInput.value = normalized.affiliation;
+  }
+
+  function participantsMatchForResume(left, right) {
+    const a = normalizeParticipant(left);
+    const b = normalizeParticipant(right);
+    return !!(
+      a.studentId &&
+      b.studentId &&
+      a.participantName &&
+      b.participantName &&
+      a.studentId === b.studentId &&
+      a.participantName === b.participantName
+    );
   }
 
   function formatParticipantLabel(participant) {
@@ -1104,7 +1122,9 @@
       releaseHistoryGuard();
     }
     updateParticipantMeta();
-    persistState();
+    if (!state.pendingResume) {
+      persistState();
+    }
   }
 
   function createSessionId() {
@@ -1532,11 +1552,14 @@
         setStatus("前回の一時保存は24時間を過ぎたため削除しました。必要なら保存済みファイルを利用してください。");
         return;
       }
-      state.phase = payload.phase || "intro";
-      state.practiceIndex = Number.isInteger(payload.practiceIndex) ? payload.practiceIndex : 0;
-      state.session = normalizeSessionState(payload.session || null);
-      if (state.session) {
-        syncParticipantInputs(state.session.participant);
+      if (payload.session) {
+        state.pendingResume = {
+          savedAt: payload.savedAt || null,
+          phase: payload.phase || "intro",
+          practiceIndex: Number.isInteger(payload.practiceIndex) ? payload.practiceIndex : 0,
+          session: normalizeSessionState(payload.session || null)
+        };
+        setStatus(getPendingResumeStatusMessage());
       }
     } catch (error) {
       clearPersistedState();
@@ -1631,6 +1654,7 @@
     state.phase = "intro";
     state.practiceIndex = 0;
     state.session = null;
+    state.pendingResume = null;
     state.storageCleared = false;
     state.storageWarningShown = false;
     clearPersistedState();
@@ -1758,6 +1782,22 @@
     if (!elements.participantForm.reportValidity()) {
       setStatus("学籍番号と受験者名を入力してください。");
       return;
+    }
+
+    if (state.pendingResume && state.pendingResume.session) {
+      if (participantsMatchForResume(participant, state.pendingResume.session.participant)) {
+        state.phase = state.pendingResume.phase || "intro";
+        state.practiceIndex = Number.isInteger(state.pendingResume.practiceIndex)
+          ? state.pendingResume.practiceIndex
+          : 0;
+        state.session = state.pendingResume.session;
+        state.pendingResume = null;
+        restoreInterface();
+        return;
+      }
+
+      clearPersistedState();
+      state.pendingResume = null;
     }
 
     state.practiceIndex = 0;
@@ -3862,6 +3902,7 @@
     }
 
     state.storageCleared = true;
+    state.pendingResume = null;
     clearPersistedState();
     renderExportStatus();
     setStatus("この端末の一時保存を削除しました。必要なファイルはダウンロード済みのものを利用してください。");
