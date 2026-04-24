@@ -113,10 +113,10 @@
 
 ### 4.2 testlet-aware marginal EAP
 
-- 能力推定は、testlet 分散を nuisance parameter として周辺化した **testlet-aware marginal EAP** を採用している。
+- 能力推定は、testlet 分散を nuisance parameter として周辺化した **testlet-aware marginal EAP 近似** を採用している。
 - これは testlet response theory / Rasch testlet modeling の考え方に依拠している。
 - 分散構造の解釈には **Paek et al. (2009)** が補助線になる。
-- ただし、ブラウザで動く形へ落とすための数値積分・実装細部は **本試作版の工学的実装**である。
+- ただし、ブラウザで動く形へ落とすための数値積分・実装細部は **本試作版の工学的な近似実装**である。強制マッチングによる testlet 内の「同じ選択肢を再使用できない」応答過程までは完全に同時モデル化していないため、研究上の表現は `testlet-aware 近似プロトタイプ` とする。
 - 現在は `15点 Gauss-Hermite` を用いている。実装は `App_CAT/script.js` の `estimateTestletAwareAbility()` にある。
 
 ### 4.3 次問選択
@@ -171,7 +171,7 @@
 論文や研究計画書では、次の表現が妥当である。
 
 - 「本試作版は、UVLT の testlet 性を踏まえ、testlet-based adaptive testing の先行研究に依拠して設計した。」
-- 「能力推定には testlet-aware marginal EAP を採用した。」
+- 「能力推定には testlet-aware marginal EAP 近似を採用した。」
 - 「band 間の共通尺度化には common-person linking を用いた。」
 - 「語彙サイズ換算は受験者向けの補助的指標として提示した。」
 

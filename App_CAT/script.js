@@ -3,7 +3,7 @@
 
   const CONFIG = {
     storageKey: "uvlt_testlet_cat_github_pages_v2",
-    operationalModeLabel: "multi-band routing + common-person cross-band linking + testlet-aware marginal EAP + expected posterior variance reduction",
+    operationalModeLabel: "multi-band routing + common-person cross-band linking + testlet-aware marginal EAP approximation + expected posterior variance reduction",
     priorMean: 0,
     priorSD: 1,
     thetaMin: -6,
@@ -27,7 +27,8 @@
     LJT_ALLOW_REPLAY: true,
     LJT_DEADLINE_APP_MS: 1600,
     LJT_DEADLINE_INAPP_MS: 2000,
-    LJT_TARGET_N: 40
+    LJT_TARGET_N: 40,
+    LJT_THETA_PAD_MAX_PER_TESTLET: 1
   };
 
   function detectResearcherMode() {
@@ -46,6 +47,14 @@
     return !!UI_MODE.researcher;
   }
 
+  function suspendHistoryGuardForNextUnload() {
+    try {
+      state.historyGuardSuspended = true;
+    } catch (error) {
+      /* state may not be initialized in isolated test harnesses */
+    }
+  }
+
   function applyUIMode() {
     if (typeof document === "undefined" || !document.body) {
       return;
@@ -55,7 +64,8 @@
 
   if (typeof window !== "undefined") {
     window.UVLT_CAT_UI = {
-      isResearcherMode: isResearcherMode
+      isResearcherMode: isResearcherMode,
+      suspendHistoryGuardForNextUnload: suspendHistoryGuardForNextUnload
     };
   }
 
@@ -90,14 +100,23 @@
       return;
     }
     const map = {};
+    const testletMap = {};
     Object.keys(TEST_BANK.itemMap).forEach(function (itemId) {
       const item = TEST_BANK.itemMap[itemId];
       if (item && typeof item.linkedDifficulty === "number") {
         map[itemId] = item.linkedDifficulty;
       }
+      if (item && item.testletId) {
+        testletMap[itemId] = item.testletId;
+      }
     });
     try { window.UVLT_LJT.setItemDifficultyMap(map); } catch (e) {
       console.error("[UVLT] setItemDifficultyMap failed:", e);
+    }
+    if (typeof window.UVLT_LJT.setItemTestletMap === "function") {
+      try { window.UVLT_LJT.setItemTestletMap(testletMap); } catch (e) {
+        console.error("[UVLT] setItemTestletMap failed:", e);
+      }
     }
   }
 
@@ -665,6 +684,7 @@
     affiliationInput: document.getElementById("affiliation-input"),
     startPracticeButton: document.getElementById("start-practice-button"),
     practiceProgress: document.getElementById("practice-progress"),
+    practiceProgressFill: document.getElementById("practice-progress-fill"),
     practiceParticipantMeta: document.getElementById("practice-participant-meta"),
     practiceTitle: document.getElementById("practice-title"),
     practiceDescription: document.getElementById("practice-description"),
@@ -677,6 +697,7 @@
     practiceFeedbackList: document.getElementById("practice-feedback-list"),
     nextPracticeButton: document.getElementById("next-practice-button"),
     testProgress: document.getElementById("test-progress"),
+    testProgressFill: document.getElementById("test-progress-fill"),
     thetaBadge: document.getElementById("theta-badge"),
     seBadge: document.getElementById("se-badge"),
     testParticipantMeta: document.getElementById("test-participant-meta"),
@@ -708,6 +729,23 @@
   };
   function setStatus(message) {
     elements.statusMessage.textContent = message || "";
+  }
+
+  function updateProgressFill(element, completed, total) {
+    if (!element) {
+      return;
+    }
+    const safeTotal = Math.max(1, total || 1);
+    const safeCompleted = Math.max(0, Math.min(completed || 0, safeTotal));
+    const ratio = Math.max(0, Math.min(1, safeCompleted / safeTotal));
+    element.style.width = (ratio * 100).toFixed(1) + "%";
+    const meter = element.parentElement;
+    if (meter && meter.classList && meter.classList.contains("progress-meter")) {
+      meter.setAttribute("aria-valuemin", "0");
+      meter.setAttribute("aria-valuemax", String(safeTotal));
+      meter.setAttribute("aria-valuenow", String(safeCompleted));
+      meter.setAttribute("aria-valuetext", Math.round(ratio * 100) + "%");
+    }
   }
 
   function markStorageUnavailable(error) {
@@ -1054,7 +1092,7 @@
       theta: CONFIG.priorMean,
       se: CONFIG.priorSD,
       map: CONFIG.priorMean,
-      scoringModel: "testlet-aware marginal EAP",
+      scoringModel: "testlet-aware marginal EAP approximation",
       linkedRaschTheta: CONFIG.priorMean,
       linkedRaschSE: CONFIG.priorSD,
       linkedRaschMap: CONFIG.priorMean,
@@ -1113,7 +1151,12 @@
     const focusTarget = isCatScreen
       ? screens[screenName].querySelector("h2, [autofocus], button, input")
       : null;
-    if (focusTarget) { focusTarget.focus(); }
+    if (focusTarget) {
+      if (/^H[1-6]$/.test(focusTarget.tagName || "") && !focusTarget.hasAttribute("tabindex")) {
+        focusTarget.setAttribute("tabindex", "-1");
+      }
+      focusTarget.focus();
+    }
 
     state.phase = screenName;
     if (isActiveSession()) {
@@ -1226,7 +1269,7 @@
             theta: estimate.theta == null ? CONFIG.priorMean : estimate.theta,
             se: estimate.se == null ? CONFIG.priorSD : estimate.se,
             map: estimate.map == null ? CONFIG.priorMean : estimate.map,
-            scoringModel: estimate.scoringModel || "testlet-aware marginal EAP",
+            scoringModel: estimate.scoringModel || "testlet-aware marginal EAP approximation",
             linkedRaschTheta: estimate.linkedRaschTheta == null ? estimate.theta : estimate.linkedRaschTheta,
             linkedRaschSE: estimate.linkedRaschSE == null ? estimate.se : estimate.linkedRaschSE,
             linkedRaschMap: estimate.linkedRaschMap == null ? estimate.map : estimate.linkedRaschMap,
@@ -1272,7 +1315,7 @@
     return !!(
       state.session &&
       !state.session.completedAt &&
-      (state.phase === "practice" || state.phase === "test")
+      (state.phase === "practice" || state.phase === "test" || state.phase === "ljt")
     );
   }
 
@@ -1762,6 +1805,7 @@
     beginPrompt("practice", practice.practiceId);
 
     elements.practiceProgress.textContent = "練習 " + (state.practiceIndex + 1) + " / " + PRACTICE_TESTLETS.length;
+    updateProgressFill(elements.practiceProgressFill, state.practiceIndex + 1, PRACTICE_TESTLETS.length);
     elements.practiceTitle.textContent = practice.title;
     elements.practiceDescription.textContent = practice.description + " 同じ語は1回だけ選べます。";
     buildTable(practice, elements.practiceOptionsHeader, elements.practiceDefinitionsBody, "practice");
@@ -2165,7 +2209,7 @@
       theta: testletAware.theta,
       se: testletAware.se,
       map: testletAware.map,
-      scoringModel: "testlet-aware marginal EAP",
+      scoringModel: "testlet-aware marginal EAP approximation",
       linkedRaschTheta: linkedRasch.theta,
       linkedRaschSE: linkedRasch.se,
       linkedRaschMap: linkedRasch.map,
@@ -2752,7 +2796,8 @@
       selectionRecord.presentedAt = presentedAt;
     }
 
-    elements.testProgress.textContent = "本番 " + (completed + 1) + " / 最大 " + CONFIG.maxTestlets + " セット";
+    elements.testProgress.textContent = "本番 セット " + (completed + 1) + " / 最大 " + CONFIG.maxTestlets;
+    updateProgressFill(elements.testProgressFill, completed + 1, CONFIG.maxTestlets);
     elements.thetaBadge.textContent = "同じ語は1回だけ選べます";
     elements.seBadge.textContent = getSavedStateLabel();
     elements.testTitle.textContent = "本番 セット " + (completed + 1);
@@ -3585,7 +3630,7 @@
         value: exportsState.lastExcelFilename || "まだ保存されていません",
         note: exportsState.lastExcelDownloadedAt
           ? "保存時刻: " + formatTimestampLabel(exportsState.lastExcelDownloadedAt)
-          : "終了時に自動保存されます。"
+          : "終了時に詳細データを自動保存します。"
       },
       {
         title: "JSON",
@@ -3659,7 +3704,7 @@
         affiliation: state.session.participant.affiliation,
         exportBaseName: buildExportBaseName(),
         operationalMode: CONFIG.operationalModeLabel,
-        scoringModel: "Testlet-aware marginal EAP on linked multi-band scale",
+        scoringModel: "Testlet-aware marginal EAP approximation on linked multi-band scale",
         selectionMetric: getSelectionMetricLabel(),
         storageTTLHours: CONFIG.storageTTLHours,
         linkingVersion: CROSS_BAND_LINKING.version,
@@ -3859,7 +3904,7 @@
       state.storageCleared = false;
       persistState();
       renderExportStatus();
-      setStatus(isResearcherMode() ? filename + " を保存しました。" : "Excel の保存が完了しました。");
+      setStatus(isResearcherMode() ? filename + " を保存しました。" : "結果ファイルの保存が完了しました。");
     } catch (error) {
       setStatus(isResearcherMode()
         ? "Excel の保存に失敗しました。"
@@ -3886,7 +3931,7 @@
       renderExportStatus();
       setStatus(isResearcherMode()
         ? filename + " を自動保存しました。"
-        : "結果の保存が完了しました。");
+        : "結果ファイルの保存が完了しました。");
     } catch (error) {
       setStatus(isResearcherMode()
         ? "Excel の自動保存に失敗しました。結果画面のボタンから再保存してください。"
@@ -4007,6 +4052,7 @@
   function initialize() {
     applyUIMode();
     elements.downloadExcelButton.disabled = typeof XLSX === "undefined";
+    elements.downloadExcelButton.textContent = "結果ファイルを保存";
     bindEvents();
     bindWindowEvents();
     restoreState();

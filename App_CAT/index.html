@@ -51,7 +51,7 @@
       .screen {
         background: var(--panel);
         border: 1px solid var(--border);
-        border-radius: 18px;
+        border-radius: 10px;
         padding: 1.5rem;
         box-shadow: 0 14px 30px rgba(14, 42, 74, 0.08);
       }
@@ -70,7 +70,7 @@
 
       .card {
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 8px;
         padding: 1rem;
         background: #fbfdff;
       }
@@ -92,7 +92,7 @@
 
       .badge {
         padding: 0.55rem 0.8rem;
-        border-radius: 999px;
+        border-radius: 8px;
         background: var(--accent-soft);
         color: var(--accent);
         font-weight: 700;
@@ -102,7 +102,7 @@
         border-left: 4px solid var(--accent);
         background: var(--accent-soft);
         padding: 0.9rem 1rem;
-        border-radius: 10px;
+        border-radius: 8px;
       }
 
       .notice.warn {
@@ -134,7 +134,7 @@
         width: 100%;
         padding: 0.8rem 0.9rem;
         border: 1px solid var(--border);
-        border-radius: 10px;
+        border-radius: 8px;
         font: inherit;
         background: #fff;
         color: var(--text);
@@ -142,7 +142,7 @@
 
       button {
         border: 0;
-        border-radius: 10px;
+        border-radius: 8px;
         padding: 0.85rem 1.1rem;
         background: var(--accent);
         color: #fff;
@@ -171,6 +171,12 @@
       select:focus-visible {
         outline: 2px solid var(--accent);
         outline-offset: 2px;
+      }
+
+      h1[tabindex="-1"]:focus,
+      h2[tabindex="-1"]:focus,
+      h3[tabindex="-1"]:focus {
+        outline: none;
       }
 
       .testlet-table {
@@ -215,7 +221,7 @@
       }
 
       .result-value {
-        font-size: 1.9rem;
+        font-size: 1.65rem;
         font-weight: 800;
         margin-top: 0.25rem;
       }
@@ -278,7 +284,7 @@
       .band-row,
       .timeline-row {
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 8px;
         padding: 0.85rem;
         background: #fbfdff;
       }
@@ -295,15 +301,42 @@
         width: 100%;
         height: 12px;
         margin-top: 0.5rem;
-        border-radius: 999px;
+        border-radius: 6px;
         background: #e4ebf5;
         overflow: hidden;
       }
 
       .bar-fill {
         height: 100%;
-        border-radius: 999px;
+        border-radius: 6px;
         background: var(--accent);
+      }
+
+      .progress-stack {
+        display: grid;
+        gap: 0.45rem;
+        margin: 0.75rem 0 1rem;
+      }
+
+      .progress-meter {
+        width: 100%;
+        height: 10px;
+        border-radius: 6px;
+        background: #e4ebf5;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        width: 0%;
+        height: 100%;
+        border-radius: 6px;
+        background: var(--accent);
+        transition: width 180ms ease;
+      }
+
+      .task-note {
+        margin: 0.5rem 0 0;
+        font-weight: 700;
       }
 
       .bar-fill.warn {
@@ -337,7 +370,7 @@
       .export-item {
         padding: 0.85rem 0.95rem;
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 8px;
         background: #fbfdff;
       }
 
@@ -361,7 +394,7 @@
         padding: 1.1rem 1.4rem;
         font-size: 1.25rem;
         font-weight: 800;
-        border-radius: 14px;
+        border-radius: 8px;
       }
 
       .ljt-yn-choice.yes {
@@ -374,6 +407,15 @@
 
       .ljt-yn-choice:disabled {
         opacity: 0.35;
+      }
+
+      .answer-ready .ljt-status-text {
+        border-left: 4px solid var(--ok);
+        background: #eaf8f1;
+      }
+
+      .answer-ready .ljt-yn-choice:not(:disabled) {
+        box-shadow: 0 0 0 3px rgba(12, 145, 91, 0.14);
       }
 
       .ljt-progress {
@@ -398,7 +440,7 @@
         font-size: 1.05rem;
         padding: 0.8rem 1rem;
         background: var(--accent-soft);
-        border-radius: 10px;
+        border-radius: 8px;
         margin: 0.6rem 0 1rem;
         min-height: 2.4rem;
       }
@@ -408,7 +450,7 @@
         background: #fff1ed;
         border-left: 4px solid #b03020;
         padding: 0.8rem 1rem;
-        border-radius: 10px;
+        border-radius: 8px;
         margin: 0.8rem 0;
         white-space: pre-wrap;
         font-family: "Menlo", "Consolas", monospace;
@@ -424,7 +466,7 @@
 
       .ljt-result-cell {
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 8px;
         padding: 1rem;
         background: #fbfdff;
         text-align: center;
@@ -449,7 +491,7 @@
 
         .screen {
           padding: 1rem;
-          border-radius: 14px;
+          border-radius: 10px;
         }
 
         .header h1 {
@@ -521,6 +563,10 @@
           </article>
         </div>
 
+        <div class="notice warn result-section">
+          このテストは PC での受験を推奨します。画面を広く使える環境で、ブラウザの戻る・再読み込み・別タブへの移動は行わずに進めてください。
+        </div>
+
         <article class="card result-section">
           <h2>受験者情報</h2>
           <form id="participant-form" class="stack" aria-label="受験者情報">
@@ -551,6 +597,11 @@
           <div id="practice-progress" class="badge"></div>
           <div class="badge">練習は本番スコアに含まれません</div>
           <div id="practice-participant-meta" class="badge" data-researcher-only="true"></div>
+        </div>
+        <div class="progress-stack">
+          <div class="progress-meter" role="progressbar" aria-label="CAT 練習の進捗" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+            <div id="practice-progress-fill" class="progress-fill"></div>
+          </div>
         </div>
 
         <h2 id="practice-title"></h2>
@@ -587,6 +638,11 @@
           <div id="theta-badge" class="badge"></div>
           <div id="se-badge" class="badge" data-researcher-only="true"></div>
           <div id="test-participant-meta" class="badge" data-researcher-only="true"></div>
+        </div>
+        <div class="progress-stack">
+          <div class="progress-meter" role="progressbar" aria-label="CAT 本番の進捗" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+            <div id="test-progress-fill" class="progress-fill"></div>
+          </div>
         </div>
 
         <h2 id="test-title"></h2>
@@ -707,7 +763,7 @@
 
         <article class="card result-section" data-researcher-only="true">
           <h3>保存ファイル</h3>
-          <p class="fine-print">終了時に Excel を自動保存します。必要に応じて JSON も保存できます。</p>
+          <p class="fine-print">終了時に詳細 Excel を自動保存します。必要に応じて JSON も保存できます。</p>
           <div id="export-status" class="export-list"></div>
           <div class="actions">
             <button id="clear-device-data-button" type="button" class="ghost" data-researcher-only="true">この端末の一時保存を削除</button>
@@ -716,7 +772,7 @@
 
         <div class="actions">
           <button id="download-json-button" type="button" data-researcher-only="true">JSON を保存</button>
-          <button id="download-excel-button" type="button" class="secondary" data-researcher-only="true">Excel を保存</button>
+          <button id="download-excel-button" type="button" class="secondary">結果ファイルを保存</button>
           <button id="restart-from-result-button" type="button">もう一度実施する</button>
         </div>
       </section>
@@ -734,6 +790,7 @@
         <article class="card result-section">
           <h3>重要な準備</h3>
           <ul>
+            <li><strong>PC での受験を推奨</strong>します。</li>
             <li><strong>ヘッドホンまたはイヤホンの着用が必須</strong>です。</li>
             <li><strong>有線接続を強く推奨</strong>します。Bluetooth 機器は音声遅延のため結果の信頼性が低下します。</li>
             <li>静かな環境で受験してください。</li>
@@ -787,6 +844,11 @@
         <div id="ljt-preload-status" class="ljt-preload-status" role="status" aria-live="polite">
           準備中...
         </div>
+        <div class="progress-stack">
+          <div class="progress-meter" role="progressbar" aria-label="LJT 音声準備の進捗" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+            <div id="ljt-preload-progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
 
         <pre id="ljt-preload-error" class="ljt-preload-error hidden"></pre>
 
@@ -799,6 +861,11 @@
         <h2>練習 (LJT)</h2>
 
         <div id="ljt-practice-progress" class="ljt-progress" role="status" aria-live="polite"></div>
+        <div class="progress-stack">
+          <div class="progress-meter" role="progressbar" aria-label="LJT 練習の進捗" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+            <div id="ljt-practice-progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
         <div id="ljt-practice-status" class="ljt-status-text" role="status" aria-live="polite"></div>
 
         <div class="ljt-fixation">+</div>
@@ -821,6 +888,11 @@
         <h2>本番 (LJT)</h2>
 
         <div id="ljt-main-progress" class="ljt-progress" role="status" aria-live="polite"></div>
+        <div class="progress-stack">
+          <div class="progress-meter" role="progressbar" aria-label="LJT 本番の進捗" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+            <div id="ljt-main-progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
         <div id="ljt-main-status" class="ljt-status-text" role="status" aria-live="polite"></div>
 
         <div class="ljt-fixation">+</div>

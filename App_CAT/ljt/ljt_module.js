@@ -42,6 +42,7 @@
   //     neighborhood filter from spec §6.1 without duplicating the test bank
   //     inside the module.
   let ITEM_DIFFICULTY_MAP = null;  // { item_id: Number(linkedDifficulty) }
+  let ITEM_TESTLET_MAP = null;     // { item_id: testlet_id }, supplied by script.js
 
   // ------------------------------------------------------------------
   // Practice items (§14, v0.5). Kept in-module so the app works even if
@@ -88,6 +89,42 @@
     return JSON.parse(JSON.stringify(value));
   }
 
+  function inferTestletId(itemId) {
+    return String(itemId || "").replace(/_i\d+$/i, "");
+  }
+
+  function getTestletIdForItem(itemId) {
+    if (ITEM_TESTLET_MAP && ITEM_TESTLET_MAP[itemId]) {
+      return ITEM_TESTLET_MAP[itemId];
+    }
+    return inferTestletId(itemId);
+  }
+
+  function buildTestletCounts(itemIds) {
+    const counts = {};
+    (itemIds || []).forEach(function (id) {
+      const testletId = getTestletIdForItem(id);
+      if (!testletId) return;
+      counts[testletId] = (counts[testletId] || 0) + 1;
+    });
+    return counts;
+  }
+
+  function cloneTestletCounts(counts) {
+    const out = {};
+    if (!counts || typeof counts !== "object") return out;
+    Object.keys(counts).forEach(function (key) {
+      const value = Number(counts[key]);
+      out[key] = isFinite(value) ? value : 0;
+    });
+    return out;
+  }
+
+  function getThetaPadMaxPerTestlet() {
+    const value = CONFIG_REF && Number(CONFIG_REF.LJT_THETA_PAD_MAX_PER_TESTLET);
+    return isFinite(value) && value > 0 ? value : 1;
+  }
+
   function getResponseMode() {
     return (CONFIG_REF && CONFIG_REF.LJT_RESPONSE_MODE) || "timed";
   }
@@ -114,6 +151,13 @@
     } catch (e) {
       return false;
     }
+  }
+
+  function setHeadphoneChoiceButtonsEnabled(enabled) {
+    ["ljt-hc-left", "ljt-hc-right", "ljt-hc-both"].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !enabled;
+    });
   }
 
   function parseCSV(text) {
@@ -509,6 +553,7 @@
 
     const targetsBase = correct.slice();
     const sources = {};
+    const catCorrectFlags = {};
 
     // R1: theta-pad sampling metadata for logging (spec §6.1, §6.3).
     const targetsMeta = {
@@ -519,8 +564,14 @@
       pad_candidates_at_10: null,
       pad_candidates_at_15: null,
       pad_candidates_all_fallback: null,
+      cat_correct_chosen: 0,
       pad_needed: 0,
       pad_chosen: 0,
+      theta_pad_testlet_cap: getThetaPadMaxPerTestlet(),
+      theta_pad_testlet_cap_relaxed: false,
+      target_requested: targetN,
+      target_chosen: 0,
+      target_underfilled: false,
       widening_triggered: false,
       notes: ""
     };
@@ -528,7 +579,10 @@
     let chosen;
     if (targetsBase.length >= targetN) {
       chosen = stratifiedSampleByBand(targetsBase, targetN, mainBank);
-      chosen.forEach(function (id) { sources[id] = "CAT_correct"; });
+      chosen.forEach(function (id) {
+        sources[id] = "CAT_correct";
+        catCorrectFlags[id] = true;
+      });
       targetsMeta.notes = "|CAT_correct| >= target_N; no theta_pad used.";
     } else {
       const padN = targetN - targetsBase.length;
@@ -574,8 +628,8 @@
           } catch (e) { /* ignore logging failure */ }
         }
 
-        // Fallback: if even ±1.5 had fewer than pad_N, take the ±1.5 set
-        // (or the full non-administered eligible pool if nothing matched).
+        // Fallback: if even ±1.5 had fewer than pad_N, keep the near-theta
+        // candidates first and top up from the full non-administered pool.
         if (padCandidates.length < padN) {
           const wide = basePadPool.filter(function (id) {
             const d = ITEM_DIFFICULTY_MAP[id];
@@ -584,10 +638,14 @@
           });
           targetsMeta.pad_candidates_all_fallback = basePadPool.length;
           if (wide.length > 0) {
-            padCandidates = wide;
+            const wideSet = new Set(wide);
+            const topUp = basePadPool.filter(function (id) {
+              return !wideSet.has(id);
+            });
+            padCandidates = wide.concat(topUp);
             widthUsed = 1.5;
             targetsMeta.notes =
-              "±1.5 still < pad_N; using all ±1.5 candidates (may under-fill).";
+              "±1.5 still < pad_N; topped up from full non-administered eligible pool.";
           } else {
             padCandidates = basePadPool.slice();
             widthUsed = Infinity;
@@ -609,12 +667,41 @@
 
       targetsMeta.neighborhood_width_used = widthUsed;
 
-      const padChosen = stratifiedSampleByBand(padCandidates, padN, mainBank);
+      const padSampleMeta = {};
+      const padChosen = stratifiedSampleByBand(padCandidates, padN, mainBank, {
+        maxPerTestlet: targetsMeta.theta_pad_testlet_cap,
+        existingTestletCounts: buildTestletCounts(targetsBase),
+        relaxTestletCapIfNeeded: true,
+        sampleMeta: padSampleMeta
+      });
       targetsMeta.pad_chosen = padChosen.length;
+      targetsMeta.theta_pad_testlet_cap_relaxed = !!padSampleMeta.testletCapRelaxed;
 
       chosen = targetsBase.concat(padChosen);
-      targetsBase.forEach(function (id) { sources[id] = "CAT_correct"; });
-      padChosen.forEach(function (id) { sources[id] = "theta_pad"; });
+      targetsBase.forEach(function (id) {
+        sources[id] = "CAT_correct";
+        catCorrectFlags[id] = true;
+      });
+      padChosen.forEach(function (id) {
+        sources[id] = "theta_pad";
+        catCorrectFlags[id] = false;
+      });
+    }
+    targetsMeta.cat_correct_chosen = chosen.filter(function (id) {
+      return sources[id] === "CAT_correct";
+    }).length;
+    targetsMeta.pad_chosen = chosen.filter(function (id) {
+      return sources[id] === "theta_pad";
+    }).length;
+    targetsMeta.target_chosen = chosen.length;
+    targetsMeta.target_underfilled = chosen.length < targetN;
+    if (targetsMeta.theta_pad_testlet_cap_relaxed) {
+      targetsMeta.notes = (targetsMeta.notes ? targetsMeta.notes + " " : "") +
+        "Theta-pad testlet cap was relaxed to reach target_N.";
+    }
+    if (targetsMeta.target_underfilled) {
+      targetsMeta.notes = (targetsMeta.notes ? targetsMeta.notes + " " : "") +
+        "Target count underfilled because eligible candidates were exhausted.";
     }
 
     // Expose meta for the caller (persisted on session.ljt.targets_meta via
@@ -633,9 +720,13 @@
         target_POS: entry.target_POS,
         tested_sense_desc: entry.tested_sense_desc,
         source: sources[itemId],
+        cat_item_correct_flag: catCorrectFlags[itemId] === true,
         sampling_strata: entry.target_level,
         eligible_at_sampling: true,
-        linked_difficulty: ITEM_DIFFICULTY_MAP ? (ITEM_DIFFICULTY_MAP[itemId] || null) : null,
+        linked_difficulty: ITEM_DIFFICULTY_MAP &&
+          Object.prototype.hasOwnProperty.call(ITEM_DIFFICULTY_MAP, itemId)
+            ? ITEM_DIFFICULTY_MAP[itemId]
+            : null,
         sampled_at: new Date().toISOString()
       };
     });
@@ -643,7 +734,8 @@
     return targets;
   }
 
-  function stratifiedSampleByBand(itemIds, n, mainBank) {
+  function stratifiedSampleByBand(itemIds, n, mainBank, options) {
+    options = options || {};
     if (n <= 0 || itemIds.length === 0) return [];
     // group by level
     const groups = { "1K": [], "2K": [], "3K": [], "4K": [], "5K": [] };
@@ -685,12 +777,59 @@
     }
 
     const out = [];
+    const selected = new Set();
+    const sampleMeta = options.sampleMeta || {};
+    const maxPerTestlet = isFinite(Number(options.maxPerTestlet))
+      ? Number(options.maxPerTestlet)
+      : null;
+    const testletCounts = cloneTestletCounts(options.existingTestletCounts);
+
+    function canTake(id, ignoreCap) {
+      if (selected.has(id)) return false;
+      if (maxPerTestlet == null || ignoreCap) return true;
+      const testletId = getTestletIdForItem(id);
+      return (testletCounts[testletId] || 0) < maxPerTestlet;
+    }
+
+    function take(id, ignoreCap) {
+      if (!canTake(id, ignoreCap)) return false;
+      selected.add(id);
+      out.push(id);
+      const testletId = getTestletIdForItem(id);
+      testletCounts[testletId] = (testletCounts[testletId] || 0) + 1;
+      return true;
+    }
+
     bands.forEach(function (b) {
       const pool = groups[b].slice();
       shuffleInPlace(pool);
-      const take = Math.min(alloc[b] || 0, pool.length);
-      for (let i = 0; i < take; i++) out.push(pool[i]);
+      const targetTake = Math.min(alloc[b] || 0, pool.length);
+      let bandTaken = 0;
+      for (let i = 0; i < pool.length && out.length < n; i++) {
+        if (bandTaken >= targetTake) break;
+        if (take(pool[i], false)) bandTaken += 1;
+      }
     });
+
+    if (out.length < n) {
+      const pool = itemIds.slice();
+      shuffleInPlace(pool);
+      for (let i = 0; i < pool.length && out.length < n; i++) {
+        take(pool[i], false);
+      }
+    }
+
+    if (out.length < n && options.relaxTestletCapIfNeeded) {
+      const pool = itemIds.slice();
+      shuffleInPlace(pool);
+      for (let i = 0; i < pool.length && out.length < n; i++) {
+        if (take(pool[i], true)) {
+          sampleMeta.testletCapRelaxed = true;
+        }
+      }
+    }
+
+    sampleMeta.underfilled = out.length < n;
     // final shuffle so band order is randomized
     shuffleInPlace(out);
     return out.slice(0, n);
@@ -708,7 +847,8 @@
 
   // ------------------------------------------------------------------
   // LJTScorer — Hautus (1995) log-linear d' (§9.2)
-  //   Applied to ALL trials (not just extreme cells).
+  //   Applied to all valid trials; invalidated retry-original rows are logged
+  //   separately and excluded from the primary denominator.
   //   Timeouts: miss (app) / FA (inapp), per §7.5.
   // ------------------------------------------------------------------
   function normalQuantile(p) {
@@ -746,7 +886,13 @@
 
   const LJTScorer = {
     computeSummary: function (trials) {
-      trials = Array.isArray(trials) ? trials : [];
+      const allTrials = Array.isArray(trials) ? trials : [];
+      const n_invalidated = allTrials.filter(function (t) {
+        return t && t.invalidation_reason;
+      }).length;
+      trials = allTrials.filter(function (t) {
+        return t && !t.invalidation_reason;
+      });
       let n_app = 0, n_inapp = 0;
       let n_hit = 0, n_fa_resp = 0;
       let n_timeout_app = 0, n_timeout_inapp = 0;
@@ -836,6 +982,7 @@
 
       return {
         n_trials_total: n_total,
+        n_trials_invalidated: n_invalidated,
         n_trials_app: n_app,
         n_trials_inapp: n_inapp,
         n_correct_total: n_correct_total,
@@ -1366,9 +1513,18 @@
           item_id: tgt.item_id,
           target_word: tgt.target_word,
           target_level: tgt.target_level,
+          target_POS: tgt.target_POS,
           condition: "appropriate",
           foil_type: "NA",
           source: tgt.source,
+          cat_item_correct_flag: tgt.cat_item_correct_flag == null
+            ? tgt.source === "CAT_correct"
+            : tgt.cat_item_correct_flag,
+          sampling_strata: tgt.sampling_strata,
+          eligible_at_sampling: tgt.eligible_at_sampling,
+          linked_difficulty: tgt.linked_difficulty,
+          tested_sense_desc: tgt.tested_sense_desc,
+          sampled_at: tgt.sampled_at,
           sentence_text: bankEntry.appropriate.sentence_text,
           audio_file: bankEntry.appropriate.audio_file
         });
@@ -1380,9 +1536,18 @@
           item_id: tgt.item_id,
           target_word: tgt.target_word,
           target_level: tgt.target_level,
+          target_POS: tgt.target_POS,
           condition: "inappropriate",
           foil_type: bankEntry.inappropriate.foil_type || "a_selectional",
           source: tgt.source,
+          cat_item_correct_flag: tgt.cat_item_correct_flag == null
+            ? tgt.source === "CAT_correct"
+            : tgt.cat_item_correct_flag,
+          sampling_strata: tgt.sampling_strata,
+          eligible_at_sampling: tgt.eligible_at_sampling,
+          linked_difficulty: tgt.linked_difficulty,
+          tested_sense_desc: tgt.tested_sense_desc,
+          sampled_at: tgt.sampled_at,
           sentence_text: bankEntry.inappropriate.sentence_text,
           audio_file: bankEntry.inappropriate.audio_file
         });
@@ -1522,6 +1687,28 @@
   // ------------------------------------------------------------------
   // Excel sheets builder (§9.1 - §9.3)
   // ------------------------------------------------------------------
+  function summarizeMainSourceAccuracy(trials, sourceName) {
+    const rows = trials.filter(function (t) {
+      return t &&
+        t.phase === "main" &&
+        t.source === sourceName &&
+        !t.invalidation_reason;
+    });
+    const answeredRows = rows.filter(function (t) {
+      return !t.timeout_flag;
+    });
+    const correct = rows.filter(function (t) { return !!t.is_correct; }).length;
+    const answeredCorrect = answeredRows.filter(function (t) { return !!t.is_correct; }).length;
+    return {
+      n: rows.length,
+      correct: correct,
+      accuracy: rows.length ? correct / rows.length : null,
+      n_answered: answeredRows.length,
+      correct_answered: answeredCorrect,
+      conditional_accuracy: answeredRows.length ? answeredCorrect / answeredRows.length : null
+    };
+  }
+
   function buildExcelSheets(session) {
     const ljt = session && session.ljt ? session.ljt : {};
     const practiceTrials = Array.isArray(ljt.practiceTrials) ? ljt.practiceTrials : [];
@@ -1536,9 +1723,15 @@
         item_id: t.item_id,
         target_word: t.target_word,
         target_level: t.target_level,
+        target_POS: t.target_POS || "",
         condition: t.condition,
         foil_type: t.foil_type,
         source: t.source,
+        cat_item_correct_flag: t.cat_item_correct_flag == null ? "" : !!t.cat_item_correct_flag,
+        sampling_strata: t.sampling_strata || "",
+        eligible_at_sampling: t.eligible_at_sampling == null ? "" : !!t.eligible_at_sampling,
+        linked_difficulty: t.linked_difficulty == null ? null : t.linked_difficulty,
+        tested_sense_desc: t.tested_sense_desc || "",
         audio_file: t.audio_file,
         response_mode: t.response_mode || getResponseMode(),
         replay_enabled: t.replay_enabled == null ? isReplayEnabled() : !!t.replay_enabled,
@@ -1572,6 +1765,7 @@
         audio_replay_count: t.audio_replay_count || 0,
         audio_play_events_json: Array.isArray(t.audio_play_events)
           ? JSON.stringify(t.audio_play_events) : "",
+        sampled_at: t.sampled_at || "",
         started_at_iso: t.started_at_iso || "",
         settled_at_iso: t.settled_at_iso || ""
       };
@@ -1579,10 +1773,13 @@
 
     const mainSummary = LJTScorer.computeSummary(mainTrials);
     const practiceSummary = LJTScorer.computeSummary(practiceTrials);
+    const catCorrectSummary = summarizeMainSourceAccuracy(mainTrials, "CAT_correct");
+    const thetaPadSummary = summarizeMainSourceAccuracy(mainTrials, "theta_pad");
     const ljt_summary = [{
       participant_id: session && session.participant ? session.participant.studentId : "",
       phase_evaluated: "main",
       n_trials_total: mainSummary.n_trials_total,
+      n_trials_invalidated: mainSummary.n_trials_invalidated,
       n_trials_app: mainSummary.n_trials_app,
       n_trials_inapp: mainSummary.n_trials_inapp,
       n_correct_total: mainSummary.n_correct_total,
@@ -1616,6 +1813,20 @@
       mean_audio_replay_count: mainSummary.mean_audio_replay_count,
       median_audio_replay_count: mainSummary.median_audio_replay_count,
       max_audio_replay_count: mainSummary.max_audio_replay_count,
+      n_LJT_trials_CAT_correct: catCorrectSummary.n,
+      n_correct_LJT_trials_CAT_correct: catCorrectSummary.correct,
+      p_LJT_correct_among_CAT_correct: catCorrectSummary.accuracy,
+      p_LJT_among_CAT_correct: catCorrectSummary.accuracy,
+      n_answered_LJT_trials_CAT_correct: catCorrectSummary.n_answered,
+      n_correct_answered_LJT_trials_CAT_correct: catCorrectSummary.correct_answered,
+      p_LJT_correct_answered_only_among_CAT_correct: catCorrectSummary.conditional_accuracy,
+      n_LJT_trials_theta_pad: thetaPadSummary.n,
+      n_correct_LJT_trials_theta_pad: thetaPadSummary.correct,
+      p_LJT_correct_among_theta_pad: thetaPadSummary.accuracy,
+      p_LJT_among_pad: thetaPadSummary.accuracy,
+      n_answered_LJT_trials_theta_pad: thetaPadSummary.n_answered,
+      n_correct_answered_LJT_trials_theta_pad: thetaPadSummary.correct_answered,
+      p_LJT_correct_answered_only_among_theta_pad: thetaPadSummary.conditional_accuracy,
       practice_raw_accuracy: practiceSummary.raw_accuracy,
       practice_n_trials: practiceSummary.n_trials_total
     }];
@@ -1639,6 +1850,7 @@
       replay_enabled: session_meta.replay_enabled == null ? isReplayEnabled() : !!session_meta.replay_enabled,
       headphone_check_attempts: hc.attempts || 0,
       headphone_check_result: hc.result || "",
+      headphone_failure_action: session_meta.headphone_failure_action || "",
       headphone_check_history_json: hc.history ? JSON.stringify(hc.history) : "",
       bluetooth_warning_shown: !!session_meta.bluetooth_warning_shown,
       // R5: spec §10.2 — record whether the Bluetooth / high-latency warning
@@ -1660,6 +1872,13 @@
       theta_pad_theta_hat: targets_meta.theta_hat,
       theta_pad_width_used: targets_meta.neighborhood_width_used,
       theta_pad_widening_triggered: !!targets_meta.widening_triggered,
+      target_count_CAT_correct: targets_meta.cat_correct_chosen || 0,
+      target_count_theta_pad: targets_meta.pad_chosen || 0,
+      theta_pad_testlet_cap: targets_meta.theta_pad_testlet_cap,
+      theta_pad_testlet_cap_relaxed: !!targets_meta.theta_pad_testlet_cap_relaxed,
+      target_requested: targets_meta.target_requested,
+      target_chosen: targets_meta.target_chosen,
+      target_underfilled: !!targets_meta.target_underfilled,
       theta_pad_candidates_at_05: targets_meta.pad_candidates_at_05,
       theta_pad_candidates_at_10: targets_meta.pad_candidates_at_10,
       theta_pad_candidates_at_15: targets_meta.pad_candidates_at_15,
@@ -1690,6 +1909,81 @@
     "ljt-result-screen"
   ];
 
+  function normalizePlanIndex(value, fallback) {
+    const n = Number(value);
+    return isFinite(n) && n >= 0 ? Math.floor(n) : (fallback || 0);
+  }
+
+  function getLjtPlanField(phase, suffix) {
+    return (phase === "practice" ? "practice_" : "main_") + suffix;
+  }
+
+  function getLjtNextIndex(ljt, phase) {
+    return normalizePlanIndex(ljt && ljt[getLjtPlanField(phase, "next_index")], 0);
+  }
+
+  function setLjtNextIndex(phase, index) {
+    if (!(state && state.session && state.session.ljt)) return;
+    state.session.ljt[getLjtPlanField(phase, "next_index")] = normalizePlanIndex(index, 0);
+  }
+
+  function clearPendingRetry(ljt) {
+    if (!ljt) return;
+    ljt.pending_retry_phase = "";
+    ljt.pending_retry_index = null;
+    ljt.pending_retry_reason = "";
+  }
+
+  function markPendingRetry(phase, index, reason) {
+    if (!(state && state.session && state.session.ljt)) return;
+    const ljt = state.session.ljt;
+    ljt.pending_retry_phase = phase || "";
+    ljt.pending_retry_index = normalizePlanIndex(index, 0);
+    ljt.pending_retry_reason = reason || "";
+    setLjtNextIndex(phase, ljt.pending_retry_index);
+  }
+
+  function clearPendingRetryIfMatches(phase, index) {
+    const ljt = state && state.session && state.session.ljt;
+    if (!ljt) return;
+    if (ljt.pending_retry_phase === phase &&
+        normalizePlanIndex(ljt.pending_retry_index, -1) === normalizePlanIndex(index, -2)) {
+      clearPendingRetry(ljt);
+    }
+  }
+
+  function deriveNextIndexFromTrialLog(trials) {
+    const validTrials = (Array.isArray(trials) ? trials : []).filter(function (t) {
+      return t && !t.invalidation_reason;
+    });
+    const planNumbers = validTrials.map(function (t) {
+      return Number(t.trial_in_phase);
+    }).filter(function (n) {
+      return isFinite(n) && n > 0;
+    });
+    if (planNumbers.length) {
+      return Math.max.apply(null, planNumbers);
+    }
+    return validTrials.length;
+  }
+
+  function appendInvalidatedTrial(phase, meta) {
+    if (!(state && state.session && state.session.ljt && meta)) return;
+    if (phase === "practice") {
+      state.session.ljt.practiceTrials.push(meta);
+    } else {
+      state.session.ljt.mainTrials.push(meta);
+    }
+    state.session.ljt.sessionMeta.invalidated_trials_count =
+      (state.session.ljt.sessionMeta.invalidated_trials_count || 0) + 1;
+    state.session.ljt.current_trial_meta = null;
+  }
+
+  function clampResumeIndex(index, total) {
+    const n = normalizePlanIndex(index, 0);
+    return Math.max(0, Math.min(n, Math.max(0, total || 0)));
+  }
+
   function showLjtScreen(name) {
     LJT_SCREENS.forEach(function (id) {
       const el = document.getElementById(id);
@@ -1710,11 +2004,53 @@
         el.setAttribute("inert", "");
       }
     });
+    setAnswerReadyState(false);
+    const active = document.getElementById(name);
+    const focusTarget = active && active.querySelector("h2, [autofocus], button");
+    if (focusTarget) {
+      if (/^H[1-6]$/.test(focusTarget.tagName || "") && !focusTarget.hasAttribute("tabindex")) {
+        focusTarget.setAttribute("tabindex", "-1");
+      }
+      try { focusTarget.focus(); } catch (e) { /* ignore */ }
+    }
   }
 
   function setText(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
+  }
+
+  function setProgressFill(id, completed, total) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const safeTotal = Math.max(1, total || 1);
+    const safeCompleted = Math.max(0, Math.min(completed || 0, safeTotal));
+    const ratio = Math.max(0, Math.min(1, safeCompleted / safeTotal));
+    el.style.width = (ratio * 100).toFixed(1) + "%";
+    const meter = el.parentElement;
+    if (meter && meter.classList && meter.classList.contains("progress-meter")) {
+      meter.setAttribute("aria-valuemin", "0");
+      meter.setAttribute("aria-valuemax", String(safeTotal));
+      meter.setAttribute("aria-valuenow", String(safeCompleted));
+      meter.setAttribute("aria-valuetext", Math.round(ratio * 100) + "%");
+    }
+  }
+
+  function getVisibleTrialPhase() {
+    const main = document.getElementById("ljt-main-screen");
+    if (main && !main.classList.contains("hidden")) return "main";
+    const practice = document.getElementById("ljt-practice-screen");
+    if (practice && !practice.classList.contains("hidden")) return "practice";
+    return state && state.session && state.session.ljt
+      ? state.session.ljt.last_phase_shown
+      : null;
+  }
+
+  function setAnswerReadyState(ready) {
+    ["ljt-practice-screen", "ljt-main-screen"].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("answer-ready", !!ready && !el.classList.contains("hidden"));
+    });
   }
 
   function bindClickOnce(id, handler) {
@@ -1748,6 +2084,11 @@
     if (state.controller.isAudioPlaying()) {
       state.controller.onPrematureClick();
       return false;
+    }
+    setAnswerReadyState(false);
+    const phase = state.controller.currentTrialMeta && state.controller.currentTrialMeta.phase;
+    if (phase) {
+      setText(phase === "practice" ? "ljt-practice-status" : "ljt-main-status", "回答を受け付けました。");
     }
     state.controller.onResponseClick(responseValue, source || "pointer");
     return true;
@@ -1801,6 +2142,8 @@
       session.ljt = {
         targets: [],
         targets_meta: null,  // R1: populated by sampleLJTTargets()
+        trialPlanPractice: [],
+        trialPlanMain: [],
         practiceTrials: [],
         mainTrials: [],
         headphoneCheck: { attempts: 0, result: "", history: [] },
@@ -1816,6 +2159,7 @@
           events_tabswitch_count: 0,
           bluetooth_warning_shown: false,
           bluetooth_action_chosen: "",   // R5: §10.2
+          headphone_failure_action: "",
           // R2: §14.1 — accuracy-triggered practice re-dose flag & telemetry
           practice_extra_triggered: false,
           practice_accuracy_original: null
@@ -1833,6 +2177,11 @@
         current_trial_meta: null,
         main_trial_index: 0,
         practice_trial_index: 0,
+        main_next_index: 0,
+        practice_next_index: 0,
+        pending_retry_phase: "",
+        pending_retry_index: null,
+        pending_retry_reason: "",
         last_phase_shown: "intro"
       };
     } else {
@@ -1844,11 +2193,23 @@
       if (sm.practice_extra_triggered == null) sm.practice_extra_triggered = false;
       if (sm.practice_accuracy_original === undefined) sm.practice_accuracy_original = null;
       if (sm.bluetooth_action_chosen == null) sm.bluetooth_action_chosen = "";
+      if (sm.headphone_failure_action == null) sm.headphone_failure_action = "";
       if (session.ljt.current_trial_meta === undefined) session.ljt.current_trial_meta = null;
       if (session.ljt.main_trial_index == null) session.ljt.main_trial_index = 0;
       if (session.ljt.practice_trial_index == null) session.ljt.practice_trial_index = 0;
+      if (session.ljt.main_next_index == null) {
+        session.ljt.main_next_index = deriveNextIndexFromTrialLog(session.ljt.mainTrials);
+      }
+      if (session.ljt.practice_next_index == null) {
+        session.ljt.practice_next_index = deriveNextIndexFromTrialLog(session.ljt.practiceTrials);
+      }
+      if (session.ljt.pending_retry_phase == null) session.ljt.pending_retry_phase = "";
+      if (session.ljt.pending_retry_index === undefined) session.ljt.pending_retry_index = null;
+      if (session.ljt.pending_retry_reason == null) session.ljt.pending_retry_reason = "";
       if (session.ljt.last_phase_shown == null) session.ljt.last_phase_shown = "intro";
       if (session.ljt.targets_meta === undefined) session.ljt.targets_meta = null;
+      if (!Array.isArray(session.ljt.trialPlanPractice)) session.ljt.trialPlanPractice = [];
+      if (!Array.isArray(session.ljt.trialPlanMain)) session.ljt.trialPlanMain = [];
     }
 
     state = {
@@ -1877,13 +2238,17 @@
     // R3 / spec §10.3: detect a mid-LJT reload and seed resume state so that
     //   the intro handler (which owns initOnUserGesture — required by Safari)
     //   can re-instantiate the controller, then skip straight to the proper
-    //   screen. If we reloaded before main trials even started (i.e. during
-    //   headphone/preload), we restart those screens rather than intro.
+    //   plan index. Resume is keyed to persisted plan indexes, not log row
+    //   counts, because invalidated rows intentionally add extra log records.
     const ljt = session.ljt;
     const reloadedMidTrial = !!(ljt.current_trial_meta && ljt.current_trial_meta.item_id);
-    const hasPracticeProgress = Array.isArray(ljt.practiceTrials) && ljt.practiceTrials.length > 0;
-    const hasMainProgress = Array.isArray(ljt.mainTrials) && ljt.mainTrials.length > 0;
-    if (reloadedMidTrial || hasMainProgress || hasPracticeProgress) {
+    const hasPendingRetry = !!(ljt.pending_retry_phase &&
+      ljt.pending_retry_index !== null && ljt.pending_retry_index !== undefined);
+    const mainNextIndex = Math.max(getLjtNextIndex(ljt, "main"),
+      deriveNextIndexFromTrialLog(ljt.mainTrials));
+    const practiceNextIndex = Math.max(getLjtNextIndex(ljt, "practice"),
+      deriveNextIndexFromTrialLog(ljt.practiceTrials));
+    if (reloadedMidTrial || hasPendingRetry || mainNextIndex > 0 || practiceNextIndex > 0) {
       // Log an invalidated row for the in-flight trial so logs show "original
       // attempt + re-attempt" per spec §10.3. The re-attempt row will be
       // written normally via onTrialDone when the trial re-plays.
@@ -1913,15 +2278,23 @@
           ? (ljt.practice_trial_index || 0)
           : (ljt.main_trial_index || 0);
         state.resumeTrialMeta = orig;
-      } else if (hasMainProgress) {
-        // Reloaded between trials during main phase — resume at next index
+        ljt.pending_retry_phase = state.resumePhase;
+        ljt.pending_retry_index = normalizePlanIndex(state.resumeIndex, 0);
+        ljt.pending_retry_reason = "page_reload";
+        ljt[getLjtPlanField(state.resumePhase, "next_index")] = normalizePlanIndex(state.resumeIndex, 0);
+      } else if (hasPendingRetry) {
+        state.resumePending = true;
+        state.resumePhase = ljt.pending_retry_phase;
+        state.resumeIndex = normalizePlanIndex(ljt.pending_retry_index, 0);
+      } else if (mainNextIndex > 0) {
+        // Reloaded between trials during main phase — resume at next plan index.
         state.resumePending = true;
         state.resumePhase = "main";
-        state.resumeIndex = ljt.mainTrials.length;
-      } else if (hasPracticeProgress) {
+        state.resumeIndex = mainNextIndex;
+      } else if (practiceNextIndex > 0) {
         state.resumePending = true;
         state.resumePhase = "practice";
-        state.resumeIndex = ljt.practiceTrials.length;
+        state.resumeIndex = practiceNextIndex;
       }
       // Clear the persisted in-flight meta so subsequent reloads (before the
       // retry actually starts) don't accumulate duplicate invalidated rows.
@@ -1948,9 +2321,12 @@
         notice.className = "notice warn ljt-resume-notice";
         notice.style.margin = "1rem 0";
         const phaseLabel = state.resumePhase === "practice" ? "練習" : "本番";
+        const trialLabel = state.resumeIndex != null
+          ? " " + (state.resumeIndex + 1) + " 試行目"
+          : "";
         notice.textContent = "前回のセッションを検出しました。" + phaseLabel +
-          " の途中から再開します。" +
-          (state.resumeTrialMeta ? " (中断した試行はやり直します)" : "");
+          trialLabel + "から再開します。" +
+          (state.resumeTrialMeta ? " 中断した試行はもう一度行います。" : "");
         intro.insertBefore(notice, intro.querySelector(".actions") || null);
       }
     }
@@ -1990,16 +2366,71 @@
     runHeadphoneAttempt();
   }
 
+  function renderHeadphoneFailureControls(onOverride) {
+    const screen = document.getElementById("ljt-headphone-check");
+    if (!screen) return;
+
+    const stale = screen.querySelector(".ljt-headphone-fail-actions");
+    if (stale) stale.remove();
+
+    setHeadphoneChoiceButtonsEnabled(false);
+
+    const box = document.createElement("div");
+    box.className = "notice warn ljt-headphone-fail-actions";
+    box.setAttribute("role", "alert");
+    box.style.margin = "1.2rem 0";
+    box.innerHTML =
+      "<p>ヘッドホン確認に失敗しました。音声環境を確認し、ページを再読み込みしてからやり直してください。</p>" +
+      "<div class=\"actions\">" +
+      "<button type=\"button\" id=\"ljt-hc-reload-recommended\">再読み込みを推奨</button>" +
+      (isResearcherMode()
+        ? " <button type=\"button\" id=\"ljt-hc-override-continue\" class=\"secondary\">研究者 override で続行</button>"
+        : "") +
+      "</div>";
+    screen.appendChild(box);
+
+    const reloadBtn = document.getElementById("ljt-hc-reload-recommended");
+    if (reloadBtn) {
+      reloadBtn.addEventListener("click", function () {
+        state.session.ljt.sessionMeta.headphone_failure_action = "reload_recommended";
+        persistLjtState();
+        try {
+          if (window.UVLT_CAT_UI &&
+              typeof window.UVLT_CAT_UI.suspendHistoryGuardForNextUnload === "function") {
+            window.UVLT_CAT_UI.suspendHistoryGuardForNextUnload();
+          }
+        } catch (e) { /* ignore */ }
+        window.location.reload();
+      });
+      try { reloadBtn.focus(); } catch (e) { /* ignore */ }
+    }
+
+    const overrideBtn = document.getElementById("ljt-hc-override-continue");
+    if (overrideBtn) {
+      overrideBtn.addEventListener("click", function () {
+        state.session.ljt.sessionMeta.headphone_failure_action = "researcher_override";
+        persistLjtState();
+        if (typeof onOverride === "function") onOverride();
+      });
+    }
+  }
+
   async function runHeadphoneAttempt() {
     const checker = state.checker;
     const sequence = checker.newSequence();
     const responses = [];
     const container = document.getElementById("ljt-hc-status");
+    const failActions = document.querySelector(".ljt-headphone-fail-actions");
+    if (failActions) failActions.remove();
+    setHeadphoneChoiceButtonsEnabled(false);
+    const retryBtnAtStart = document.getElementById("ljt-hc-retry");
+    if (retryBtnAtStart) retryBtnAtStart.classList.add("hidden");
     if (container) container.textContent = "音が 3 回鳴ります。それぞれどこから聞こえたか選んでください。";
 
     for (let i = 0; i < sequence.length; i++) {
       if (container) container.textContent = "音 " + (i + 1) + " / 3 を再生中...";
       await checker.playTone(sequence[i]);
+      if (container) container.textContent = "音 " + (i + 1) + " / 3 の聞こえ方を選んでください。";
       // Wait for user click on L/R/both
       const response = await new Promise(function (resolve) {
         ["ljt-hc-left", "ljt-hc-right", "ljt-hc-both"].forEach(function (id) {
@@ -2007,9 +2438,11 @@
           if (!el) return;
           const newEl = el.cloneNode(true);
           el.parentNode.replaceChild(newEl, el);
+          newEl.disabled = false;
           newEl.addEventListener("click", function () {
             const ch = id === "ljt-hc-left" ? "left"
                      : id === "ljt-hc-right" ? "right" : "both";
+            setHeadphoneChoiceButtonsEnabled(false);
             resolve(ch);
           });
         });
@@ -2047,14 +2480,17 @@
       }
     } else {
       state.session.ljt.headphoneCheck.result = "fail";
+      state.session.ljt.sessionMeta.headphone_failure_action = "blocked_after_failure";
       if (container) {
         container.textContent = isResearcherMode()
-          ? "ヘッドホン確認に 3 回失敗しました。研究者確認後に続行します。"
-          : "ヘッドホン確認に失敗しました。担当者の指示に従ってください。";
+          ? "ヘッドホン確認に 3 回失敗しました。再読み込みを推奨します。研究者 override で続行できます。"
+          : "ヘッドホン確認に失敗しました。再読み込みしてからやり直してください。";
       }
-      // still allow to proceed (spec §15.6 marks this as exclusion criterion)
-      maybeShowLatencyWarning(function () {
-        setTimeout(startPreload, 1000);
+      persistLjtState();
+      renderHeadphoneFailureControls(function () {
+        maybeShowLatencyWarning(function () {
+          setTimeout(startPreload, 400);
+        });
       });
     }
   }
@@ -2183,11 +2619,14 @@
     showLjtScreen("ljt-preload-screen");
     state.session.ljt.preload.startedAt = new Date().toISOString();
 
-    // R3: On resume the targets + trial plan already exist in session; rebuild
-    //   them from stored data to avoid re-sampling (which would pick different
-    //   targets and render the partial-log inconsistent).
+    // R3: On resume the targets + trial plan already exist in session. Reuse
+    //   the stored plan exactly so resume indexes point at the same trial order.
     const hasStoredTargets = Array.isArray(state.session.ljt.targets) &&
       state.session.ljt.targets.length > 0;
+    const hasStoredPracticePlan = Array.isArray(state.session.ljt.trialPlanPractice) &&
+      state.session.ljt.trialPlanPractice.length > 0;
+    const hasStoredMainPlan = Array.isArray(state.session.ljt.trialPlanMain) &&
+      state.session.ljt.trialPlanMain.length > 0;
 
     if (!hasStoredTargets) {
       state.session.ljt.targets = sampleLJTTargets(
@@ -2195,19 +2634,27 @@
         (CONFIG_REF && CONFIG_REF.LJT_TARGET_N) || 40
       );
     }
-    state.trialPlanPractice = buildPracticeTrialPlan(SENTENCE_BANK.practice);
-    state.trialPlanMain = buildTrialPlan(
-      state.session.ljt.targets,
-      SENTENCE_BANK.main,
-      "main"
-    );
+    state.trialPlanPractice = hasStoredPracticePlan
+      ? clonePlain(state.session.ljt.trialPlanPractice)
+      : buildPracticeTrialPlan(SENTENCE_BANK.practice);
+    state.trialPlanMain = hasStoredMainPlan
+      ? clonePlain(state.session.ljt.trialPlanMain)
+      : buildTrialPlan(
+        state.session.ljt.targets,
+        SENTENCE_BANK.main,
+        "main"
+      );
+    state.session.ljt.trialPlanPractice = clonePlain(state.trialPlanPractice);
+    state.session.ljt.trialPlanMain = clonePlain(state.trialPlanMain);
+    persistLjtState();
     const allTrials = state.trialPlanPractice.concat(state.trialPlanMain);
     const uniqueFiles = Array.from(new Set(allTrials.map(function (t) { return t.audio_file; })));
     state.session.ljt.preload.total = uniqueFiles.length;
 
     setText("ljt-preload-status", isResearcherMode()
       ? "音声ファイル " + uniqueFiles.length + " 件を読み込み中 (0/" + uniqueFiles.length + ")..."
-      : "音声を準備しています...");
+      : "音声を準備しています... 0%");
+    setProgressFill("ljt-preload-progress-fill", 0, uniqueFiles.length);
     const startBtn = document.getElementById("ljt-preload-start-button");
     if (startBtn) startBtn.disabled = true;
 
@@ -2226,7 +2673,8 @@
           done += 1;
           setText("ljt-preload-status", isResearcherMode()
             ? "音声ファイル " + uniqueFiles.length + " 件を読み込み中 (" + done + "/" + uniqueFiles.length + ")..."
-            : "音声を準備しています...");
+            : "音声を準備しています... " + Math.round((done / Math.max(1, uniqueFiles.length)) * 100) + "%");
+          setProgressFill("ljt-preload-progress-fill", done, uniqueFiles.length);
         });
     }));
 
@@ -2265,6 +2713,7 @@
       setText("ljt-preload-status", isResearcherMode()
         ? "読み込み完了 (" + uniqueFiles.length + " 件)。"
         : "準備ができました。");
+      setProgressFill("ljt-preload-progress-fill", uniqueFiles.length, uniqueFiles.length);
       if (startBtn) {
         startBtn.disabled = false;
         startBtn.textContent = "次へ進む";
@@ -2279,8 +2728,7 @@
           state.resumePending = false;
           state.session.ljt.mainStartedAt = state.session.ljt.mainStartedAt ||
             new Date().toISOString();
-          state.currentIndex = Math.max(0, Math.min(
-            state.resumeIndex, state.trialPlanMain.length - 1));
+          state.currentIndex = clampResumeIndex(state.resumeIndex, state.trialPlanMain.length);
           showLjtScreen("ljt-main-screen");
           runNextTrial("main");
           return;
@@ -2288,8 +2736,7 @@
         if (state.resumePending && state.resumePhase === "practice") {
           state.resumePending = false;
           showLjtScreen("ljt-practice-screen");
-          state.currentIndex = Math.max(0, Math.min(
-            state.resumeIndex, state.trialPlanPractice.length - 1));
+          state.currentIndex = clampResumeIndex(state.resumeIndex, state.trialPlanPractice.length);
           runNextTrial("practice");
           return;
         }
@@ -2336,6 +2783,8 @@
               t.trial_in_phase = seq;
             });
             state.trialPlanPractice = trials.concat(extras);
+            state.session.ljt.trialPlanPractice = clonePlain(state.trialPlanPractice);
+            persistLjtState();
             try {
               console.info("[LJT] practice_extra_triggered (accuracy " +
                 (acc * 100).toFixed(1) + "% < 60%): +" + extras.length +
@@ -2352,9 +2801,15 @@
         }
 
         // End of practice — prompt to start main
+        setLjtNextIndex("practice", trials.length);
+        persistLjtState();
         bindClickOnce("ljt-practice-continue-button", function () {
           state.session.ljt.mainStartedAt = new Date().toISOString();
           state.currentIndex = 0;
+          setLjtNextIndex("main", 0);
+          state.session.ljt.main_trial_index = 0;
+          state.session.ljt.last_phase_shown = "main";
+          persistLjtState();
           showLjtScreen("ljt-main-screen");
           runNextTrial("main");
         });
@@ -2370,6 +2825,8 @@
       state.session.ljt.completed = true;
       state.session.ljt.completedAt = state.session.ljt.mainFinishedAt;  // R4 gate
       state.session.ljt.current_trial_meta = null;                       // R3 cleanup
+      setLjtNextIndex("main", trials.length);
+      clearPendingRetry(state.session.ljt);
       const startedMs = Date.parse(state.session.ljt.mainStartedAt);
       const endedMs = Date.parse(state.session.ljt.mainFinishedAt);
       if (isFinite(startedMs) && isFinite(endedMs)) {
@@ -2402,6 +2859,11 @@
     setText(progressId,
       (phase === "practice" ? "練習 " : "本番 ") +
       (state.currentIndex + 1) + " / " + trials.length);
+    setProgressFill(
+      phase === "practice" ? "ljt-practice-progress-fill" : "ljt-main-progress-fill",
+      state.currentIndex + 1,
+      trials.length
+    );
 
     // R3: §10.3 — record the in-flight trial so restoreState can detect that
     //   a reload interrupted THIS trial and retry it with invalidation_reason
@@ -2413,6 +2875,8 @@
     } else {
       state.session.ljt.main_trial_index = state.currentIndex;
     }
+    setLjtNextIndex(phase, state.currentIndex);
+    clearPendingRetryIfMatches(phase, state.currentIndex);
     state.session.ljt.current_trial_meta = clonePlain(trialMeta);
     persistLjtState();
 
@@ -2420,9 +2884,8 @@
     if (!audioBuf) {
       // audio missing — skip trial with invalidation
       console.warn("[LJT] no audio buffer for", trial.audio_file, "— skipping");
-      state.currentIndex += 1;
       // Record as invalidated
-      const invalidatedMeta = Object.assign({}, trial, {
+      const invalidatedMeta = Object.assign({}, trialMeta, {
         response_value: null,
         response_at_ctx_s: null,
         rt_from_offset_ms: null,
@@ -2436,13 +2899,13 @@
         audio_play_count_total: 0,
         audio_play_count_completed: 0,
         audio_replay_count: 0,
-        audio_play_events: []
+        audio_play_events: [],
+        settled_at_iso: new Date().toISOString()
       });
-      if (phase === "practice") {
-        state.session.ljt.practiceTrials.push(invalidatedMeta);
-      } else {
-        state.session.ljt.mainTrials.push(invalidatedMeta);
-      }
+      appendInvalidatedTrial(phase, invalidatedMeta);
+      state.currentIndex += 1;
+      setLjtNextIndex(phase, state.currentIndex);
+      persistLjtState();
       setTimeout(function () { runNextTrial(phase); }, 200);
       return;
     }
@@ -2451,8 +2914,17 @@
     disableYesNo();
     setupResponseHandlers(phase);
 
-    await state.controller.playTrial(trialMeta, audioBuf);
+    const settledMeta = await state.controller.playTrial(trialMeta, audioBuf);
     // settleTrial callback writes the trial; onTrialDone pushes to session
+
+    if (settledMeta && settledMeta.invalidation_reason) {
+      markPendingRetry(phase, state.currentIndex, settledMeta.invalidation_reason);
+      persistLjtState();
+      setText(statusId, "試行をやり直します。");
+      await new Promise(function (r) { setTimeout(r, 800); });
+      runNextTrial(phase);
+      return;
+    }
 
     // Inter-trial interval 800 ms (+ fixation handled visually by UI)
     await new Promise(function (r) { setTimeout(r, 800); });
@@ -2468,6 +2940,8 @@
     }
 
     state.currentIndex += 1;
+    setLjtNextIndex(phase, state.currentIndex);
+    persistLjtState();
     runNextTrial(phase);
   }
 
@@ -2482,6 +2956,10 @@
     if (meta.invalidation_reason) {
       state.session.ljt.sessionMeta.invalidated_trials_count =
         (state.session.ljt.sessionMeta.invalidated_trials_count || 0) + 1;
+      const retryIndex = meta.trial_in_phase == null
+        ? (state.currentIndex || 0)
+        : Math.max(0, Number(meta.trial_in_phase) - 1);
+      markPendingRetry(meta.phase, retryIndex, meta.invalidation_reason);
     }
     // R3: trial is settled — clear the in-flight snapshot.
     state.session.ljt.current_trial_meta = null;
@@ -2562,6 +3040,7 @@
   }
 
   function enableYesNo() {
+    const phase = getVisibleTrialPhase();
     allResponseButtonIds().forEach(function (id) {
       const el = document.getElementById(id);
       if (el) el.disabled = false;
@@ -2572,8 +3051,14 @@
       el.classList.toggle("hidden", !isReplayEnabled());
       el.disabled = !isReplayEnabled();
     });
+    setAnswerReadyState(true);
+    if (phase === "practice" || phase === "main") {
+      setText(phase === "practice" ? "ljt-practice-status" : "ljt-main-status",
+        "回答できます。自然なら F、不自然なら J でも回答できます。");
+    }
   }
   function disableYesNo() {
+    setAnswerReadyState(false);
     allResponseButtonIds().forEach(function (id) {
       const el = document.getElementById(id);
       if (el) el.disabled = true;
@@ -2649,6 +3134,21 @@
       }
       ITEM_DIFFICULTY_MAP = out;
     },
+    setItemTestletMap: function (map) {
+      if (!map) { ITEM_TESTLET_MAP = null; return; }
+      const out = {};
+      if (map instanceof Map) {
+        map.forEach(function (v, k) {
+          if (v != null && String(v)) out[k] = String(v);
+        });
+      } else {
+        Object.keys(map).forEach(function (k) {
+          const v = map[k];
+          if (v != null && String(v)) out[k] = String(v);
+        });
+      }
+      ITEM_TESTLET_MAP = out;
+    },
     startPhase: startPhase,
     loadSentences: loadSentences,
     sampleLJTTargets: sampleLJTTargets,
@@ -2663,7 +3163,8 @@
       normalQuantile: normalQuantile,
       PRACTICE_ITEMS: PRACTICE_ITEMS,
       extractThetaHat: extractThetaHat,
-      getItemDifficultyMap: function () { return ITEM_DIFFICULTY_MAP; }
+      getItemDifficultyMap: function () { return ITEM_DIFFICULTY_MAP; },
+      getItemTestletMap: function () { return ITEM_TESTLET_MAP; }
     }
   };
 })();

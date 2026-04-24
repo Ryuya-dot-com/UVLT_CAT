@@ -3,6 +3,10 @@
 
 # Local or generated app artifacts
 App_CAT/simulation_output/
+UVLTCAT_*.xlsx
+UVLTCAT_*.json
+App_CAT/UVLTCAT_*.xlsx
+App_CAT/UVLTCAT_*.json
 
 # Analysis outputs and sensitive/local data
 Analysis/Japanese_University_Students/

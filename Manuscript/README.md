@@ -10,7 +10,7 @@
 - 対象: `UVLT 1k–5k`
 - 出題単位: `3問セット（testlet）`
 - 項目バンク: `50セット / 150項目`
-- 推定法: `testlet-aware marginal EAP`
+- 推定法: `testlet-aware marginal EAP 近似`
 - 共通尺度化: `common-person cross-band linking`
 - 次問選択: `expected posterior variance reduction`
 - 停止規則: `最少 6 セット / 最大 12 セット / 目標 SE 到達`
@@ -26,7 +26,7 @@
 - **Open Science 前提**のため、項目文・選択肢・正答・尺度情報は公開されています。
 - **高 stakes の本番試験運用**は想定していません。
 - 語彙サイズ換算は、受験者向けの**補助的な解釈指標**です。
-- 主スコアは、`testlet-aware marginal EAP` による能力推定です。
+- 主スコアは、`testlet-aware marginal EAP 近似` による能力推定です。
 
 ## 実行方法
 
@@ -112,7 +112,7 @@ http://localhost:8000
 
 ### 推定
 
-- 能力推定は `testlet-aware marginal EAP`
+- 能力推定は `testlet-aware marginal EAP 近似`
 - testlet 分散は band ごとに保持
 - 数値積分は `15点 Gauss-Hermite`
 

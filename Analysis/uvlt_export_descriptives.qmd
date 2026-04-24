@@ -79,6 +79,15 @@ drop_note_rows <- function(df) {
   df
 }
 
+ensure_columns <- function(df, columns) {
+  for (column in columns) {
+    if (!(column %in% names(df))) {
+      df[[column]] <- rep(NA, nrow(df))
+    }
+  }
+  df
+}
+
 safe_numeric <- function(x) {
   suppressWarnings(as.numeric(x))
 }
@@ -121,6 +130,13 @@ fmt_pct <- function(x, digits = 1) {
 
 fmt_int <- function(x) {
   ifelse(is.na(x), "NA", comma(round(as.numeric(x))))
+}
+
+scalar_col <- function(df, name, default = NA) {
+  if (name %in% names(df) && length(df[[name]]) > 0) {
+    return(df[[name]][[1]])
+  }
+  default
 }
 
 fmt_ms <- function(x) {
@@ -292,6 +308,21 @@ testlet_variance_tbl <- read_sheet("testlet_variance", export_xlsx, sheet_names)
 
 if (has_ljt) {
   ljt_log_tbl <- read_sheet("ljt_log", export_xlsx, sheet_names) %>%
+    ensure_columns(c(
+      "phase", "condition", "target_level", "response_mode", "replay_enabled",
+      "timeout_flag", "is_correct", "is_practice_extra", "is_retry_original",
+      "invalidation_reason", "response_value", "trial_seq", "trial_in_phase",
+      "audio_duration_ms", "first_audio_context_start_time_s",
+      "audio_context_start_time_s", "first_audio_onset_at_ctx_s",
+      "audio_onset_at_ctx_s", "first_audio_offset_at_ctx_s",
+      "audio_offset_at_ctx_s", "last_audio_onset_at_ctx_s",
+      "last_audio_offset_at_ctx_s", "deadline_at_ctx_s", "response_at_ctx_s",
+      "rt_from_offset_ms", "rt_from_first_offset_ms", "rt_from_last_offset_ms",
+      "response_from_first_onset_ms", "response_from_last_onset_ms",
+      "premature_click_count", "premature_replay_click_count",
+      "audio_play_count_total", "audio_play_count_completed",
+      "audio_replay_count", "started_at_iso", "settled_at_iso"
+    )) %>%
     mutate(
       phase = factor(phase, levels = c("practice", "main")),
       condition = factor(condition, levels = condition_levels),
@@ -329,7 +360,7 @@ if (has_ljt) {
     slice(1) %>%
     mutate(
       across(any_of(c(
-        "n_trials_total", "n_trials_app", "n_trials_inapp", "n_correct_total",
+        "n_trials_total", "n_trials_invalidated", "n_trials_app", "n_trials_inapp", "n_correct_total",
         "n_correct_app", "n_correct_inapp", "n_hit_app", "n_fa_inapp",
         "n_timeout_app", "n_timeout_inapp", "H", "F", "d_primary",
         "c_primary", "d_excluding_timeouts", "raw_accuracy",
@@ -341,7 +372,17 @@ if (has_ljt) {
         "mean_rt_last_offset_correct", "median_rt_last_offset_correct",
         "mean_audio_play_count_total", "median_audio_play_count_total",
         "mean_audio_replay_count", "median_audio_replay_count",
-        "max_audio_replay_count", "practice_raw_accuracy", "practice_n_trials"
+        "max_audio_replay_count", "n_LJT_trials_CAT_correct",
+        "n_correct_LJT_trials_CAT_correct", "p_LJT_correct_among_CAT_correct",
+        "p_LJT_among_CAT_correct", "n_answered_LJT_trials_CAT_correct",
+        "n_correct_answered_LJT_trials_CAT_correct",
+        "p_LJT_correct_answered_only_among_CAT_correct",
+        "n_LJT_trials_theta_pad",
+        "n_correct_LJT_trials_theta_pad", "p_LJT_correct_among_theta_pad",
+        "p_LJT_among_pad", "n_answered_LJT_trials_theta_pad",
+        "n_correct_answered_LJT_trials_theta_pad",
+        "p_LJT_correct_answered_only_among_theta_pad",
+        "practice_raw_accuracy", "practice_n_trials"
       )), safe_numeric)
     )
 
@@ -610,6 +651,9 @@ if (has_ljt && nrow(ljt_summary_tbl)) {
     指標 = c(
       "Response mode", "Replay enabled", "Main trials", "d-prime",
       "Hit rate", "False-alarm rate", "Raw accuracy",
+      "CAT-correct source accuracy", "CAT-correct answered-only accuracy",
+      "Theta-pad source accuracy", "Theta-pad answered-only accuracy",
+      "Invalidated trials",
       "Mean play count", "Mean replay count",
       "Median RT from first offset", "Median RT from last offset"
     ),
@@ -621,6 +665,11 @@ if (has_ljt && nrow(ljt_summary_tbl)) {
       fmt_pct(ljt_row$H),
       fmt_pct(ljt_row$F),
       fmt_pct(ljt_row$raw_accuracy),
+      glue("{fmt_pct(scalar_col(ljt_row, 'p_LJT_correct_among_CAT_correct'))} ({fmt_int(scalar_col(ljt_row, 'n_correct_LJT_trials_CAT_correct'))}/{fmt_int(scalar_col(ljt_row, 'n_LJT_trials_CAT_correct'))})"),
+      glue("{fmt_pct(scalar_col(ljt_row, 'p_LJT_correct_answered_only_among_CAT_correct'))} ({fmt_int(scalar_col(ljt_row, 'n_correct_answered_LJT_trials_CAT_correct'))}/{fmt_int(scalar_col(ljt_row, 'n_answered_LJT_trials_CAT_correct'))})"),
+      glue("{fmt_pct(scalar_col(ljt_row, 'p_LJT_correct_among_theta_pad'))} ({fmt_int(scalar_col(ljt_row, 'n_correct_LJT_trials_theta_pad'))}/{fmt_int(scalar_col(ljt_row, 'n_LJT_trials_theta_pad'))})"),
+      glue("{fmt_pct(scalar_col(ljt_row, 'p_LJT_correct_answered_only_among_theta_pad'))} ({fmt_int(scalar_col(ljt_row, 'n_correct_answered_LJT_trials_theta_pad'))}/{fmt_int(scalar_col(ljt_row, 'n_answered_LJT_trials_theta_pad'))})"),
+      fmt_int(scalar_col(ljt_row, "n_trials_invalidated")),
       fmt_num(ljt_row$mean_audio_play_count_total, digits = 2),
       fmt_num(ljt_row$mean_audio_replay_count, digits = 2),
       fmt_ms(ljt_row$median_rt_first_offset_all),

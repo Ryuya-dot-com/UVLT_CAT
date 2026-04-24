@@ -6,7 +6,7 @@
 **主テンプレート**: Saito, Hosaka, Suzukida, Takizawa, & Uchihara (2026) *Second Language Research*
 **補助参照**: Uchihara, Saito, Kurokawa, Takizawa, & Suzukida (2025) *Language Learning*, 75(2), 458–492
 
-> 実装メモ (2026-04-21): 現行のブラウザ実装は pilot 運用のため、回答を untimed にし、`もう一度聞く` ボタンを有効化しています。trial ごとの再生回数、再生イベント、複数基準の RT を `ljt_log` / `ljt_summary` / `ljt_session_meta` に出力します。音声生成は `speaking_rate=0.90` に変更済みです。本文中の 1 回再生・1.6/2.0 秒 deadline 記述は旧設計として読み、必要に応じて今後 v0.6 で整理します。
+> 実装メモ (2026-04-24): 現行のブラウザ実装は pilot 運用のため、回答を untimed にし、`もう一度聞く` ボタンを有効化しています。LJT は CAT 正解項目を意図的に再提示し、UVLT CAT で正解した項目を本当に使えるか検討します。trial ごとの再生回数、再生イベント、複数基準の RT、`source` / `cat_item_correct_flag` を `ljt_log` / `ljt_summary` / `ljt_session_meta` に出力します。ヘッドホン確認に 3 回失敗した場合は参加者フローを止め、`再読み込みを推奨` または研究者 override で対応します。音声生成は `speaking_rate=0.90` に変更済みです。本文中の 1 回再生・1.6/2.0 秒 deadline 記述は旧設計として読み、必要に応じて今後 v0.6 で整理します。
 
 ---
 
@@ -826,8 +826,8 @@ d_excl = qnorm(H_excl) - qnorm(F_excl)
 - `raw_accuracy = n_correct_total / 80`
 - `conditional_accuracy = n_correct / (80 - n_timeout)` (tertiary)
 - `mean_rt_app_correct`, `mean_rt_inapp_correct`, `median_rt_app_correct`, `median_rt_inapp_correct`
-- `p_LJT_among_CAT_correct` (H1 直接指標)
-- `p_LJT_among_pad`
+- `p_LJT_among_CAT_correct` / `p_LJT_correct_among_CAT_correct` (H1 直接指標)
+- `p_LJT_among_pad` / `p_LJT_correct_among_theta_pad`
 
 ### 9.3 `ljt_session_meta` (セッションレベル、1 行/参加者)
 
